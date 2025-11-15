@@ -5,6 +5,11 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
   const [url, setUrl] = useState('');
   const [error, setError] = useState(null);
 
+  const isValidUrl = (urlString) => {
+    const trimmed = urlString.trim();
+    return trimmed.length > 0 && /^https?:\/\/.+/.test(trimmed);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -14,9 +19,9 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
     }
 
     const trimmedUrl = url.trim();
-    const isValidUrl = /^https?:\/\/.+/.test(trimmedUrl);
+    const valid = /^https?:\/\/.+/.test(trimmedUrl);
     
-    if (!isValidUrl) {
+    if (!valid) {
       setError('Please enter a valid URL (e.g., https://example.com)');
       return;
     }
@@ -59,7 +64,7 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
 
         <button
           type="submit"
-          disabled={loading || !url.trim()}
+          disabled={loading || !isValidUrl(url)}
           className="w-full bg-white hover:bg-neutral-100 text-black font-medium py-4 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
         >
           {loading ? 'Running...' : 'Start Test'}
