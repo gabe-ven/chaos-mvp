@@ -1,10 +1,7 @@
 import { sleep } from './utils/timers.js';
+import { sendLog, sendError } from './realtime.js';
 
-// Daytona configuration
-const DAYTONA_API_KEY = process.env.DAYTONA_API_KEY;
-const DAYTONA_API_URL = process.env.DAYTONA_API_URL || 'https://api.daytona.io'; // Default URL
-
-const USE_REAL_DAYTONA = !!DAYTONA_API_KEY;
+const USE_REAL_DAYTONA = process.env.DAYTONA_API_KEY && process.env.DAYTONA_API_URL;
 
 /**
  * Spins up a Daytona workspace for the given URL/repo
@@ -12,10 +9,13 @@ const USE_REAL_DAYTONA = !!DAYTONA_API_KEY;
  */
 export async function spinUpWorkspace(url) {
   console.log(`[Daytona] Spinning up workspace for: ${url}`);
+  sendLog(`Provisioning Daytona workspace for: ${url}`, 'info');
   
   if (USE_REAL_DAYTONA) {
+    sendLog('Using real Daytona API...', 'info');
     return await spinUpWorkspaceReal(url);
   } else {
+    sendLog('Using stub Daytona workspace (no API key configured)', 'warning');
     return await spinUpWorkspaceStub(url);
   }
 }
@@ -25,12 +25,13 @@ export async function spinUpWorkspace(url) {
  */
 async function spinUpWorkspaceReal(url) {
   try {
-    console.log(`[Daytona] Using real Daytona API (${DAYTONA_API_URL})...`);
+    console.log('[Daytona] Using real Daytona API...');
+    sendLog('Creating workspace via Daytona API...', 'info');
     
-    const response = await fetch(`${DAYTONA_API_URL}/workspaces`, {
+    const response = await fetch(`${process.env.DAYTONA_API_URL}/workspaces`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${DAYTONA_API_KEY}`,
+        'Authorization': `Bearer ${process.env.DAYTONA_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -42,12 +43,16 @@ async function spinUpWorkspaceReal(url) {
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(`Daytona API error: ${response.status} - ${error}`);
+      const errorMsg = `Daytona API error: ${response.status} - ${error}`;
+      sendLog(errorMsg, 'error');
+      throw new Error(errorMsg);
     }
 
     const data = await response.json();
+    const workspaceUrl = data.url || data.workspaceUrl;
     
-    console.log(`[Daytona] ✓ Workspace created: ${data.url || data.workspaceUrl}`);
+    console.log(`[Daytona] ✓ Workspace created: ${workspaceUrl}`);
+    sendLog(`✅ Workspace created: ${workspaceUrl}`, 'success');
     
     return {
       success: true,
@@ -58,6 +63,7 @@ async function spinUpWorkspaceReal(url) {
     };
   } catch (error) {
     console.error(`[Daytona] ✗ Failed to create workspace:`, error);
+    sendError(error, 'Daytona Workspace Creation');
     
     return {
       success: false,
@@ -71,6 +77,7 @@ async function spinUpWorkspaceReal(url) {
  */
 async function spinUpWorkspaceStub(url) {
   console.log('[Daytona] Using stub (no API key configured)');
+  sendLog('Simulating workspace creation...', 'info');
   
   try {
     // Simulate workspace creation time
@@ -80,6 +87,7 @@ async function spinUpWorkspaceStub(url) {
     const workspaceUrl = `https://workspace-${workspaceId}.daytona.dev`;
     
     console.log(`[Daytona] ✓ Workspace ready (stub): ${workspaceUrl}`);
+    sendLog(`✅ Stub workspace ready: ${workspaceUrl}`, 'success');
     
     return {
       success: true,
@@ -89,6 +97,7 @@ async function spinUpWorkspaceStub(url) {
     };
   } catch (error) {
     console.error(`[Daytona] ✗ Failed to create workspace:`, error);
+    sendError(error, 'Stub Workspace Creation');
     
     return {
       success: false,
@@ -115,10 +124,10 @@ export async function tearDownWorkspace(workspaceId) {
  */
 async function tearDownWorkspaceReal(workspaceId) {
   try {
-    const response = await fetch(`${DAYTONA_API_URL}/workspaces/${workspaceId}`, {
+    const response = await fetch(`${process.env.DAYTONA_API_URL}/workspaces/${workspaceId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${DAYTONA_API_KEY}`
+        'Authorization': `Bearer ${process.env.DAYTONA_API_KEY}`
       }
     });
 

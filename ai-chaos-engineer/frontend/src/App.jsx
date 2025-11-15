@@ -25,11 +25,10 @@ function App() {
             </div>
             <a
               href="/live"
-              target="_blank"
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2"
             >
               <span>📡</span>
-              <span>Open Live Dashboard</span>
+              <span>Live Dashboard</span>
             </a>
           </div>
         </div>
@@ -62,7 +61,7 @@ function App() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-chaos-400 mt-0.5">🎨</span>
-                  <span><strong>UI Check:</strong> Validates accessibility, responsiveness, and errors</span>
+                  <span><strong>UI Check:</strong> Validates URL accessibility and response time</span>
                 </li>
               </ul>
             </div>
