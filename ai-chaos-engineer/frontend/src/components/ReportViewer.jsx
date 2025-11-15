@@ -276,7 +276,7 @@ export default function ReportView({ report, loading, onBack }) {
           View Raw JSON
         </summary>
         <div className="px-6 pb-6">
-          <pre className="bg-gray-50 rounded-xl p-4 text-xs text-gray-700 overflow-x-auto border border-gray-200 font-mono">
+          <pre className="bg-gray-50 rounded-xl p-4 text-xs text-gray-700 overflow-x-auto border border-gray-200 font-mono custom-scrollbar">
             {JSON.stringify(report, null, 2)}
           </pre>
         </div>

@@ -40,7 +40,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen md:h-screen bg-black text-white relative overflow-y-auto md:overflow-hidden flex flex-col">
+    <div className={`min-h-screen ${loading || report ? 'md:min-h-screen' : 'md:h-screen'} bg-black text-white relative ${loading || report ? 'md:overflow-y-auto custom-scrollbar' : 'md:overflow-hidden'} overflow-y-auto flex flex-col`}>
       {/* Animated background gradient */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-950/30 via-black to-purple-950/30"></div>
@@ -68,9 +68,9 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 md:overflow-hidden flex md:items-center justify-center max-w-5xl mx-auto w-full px-4 sm:px-6 relative z-0 md:py-0 py-8">
+      <main className={`flex-1 ${loading ? '' : 'md:overflow-hidden'} flex ${loading ? '' : 'md:items-center'} justify-center max-w-5xl mx-auto w-full px-4 sm:px-6 relative z-0 md:py-0 py-8`}>
         {!report ? (
-          <div className="w-full space-y-6 sm:space-y-8 md:py-4 sm:py-8">
+          <div className={`w-full space-y-6 sm:space-y-8 ${loading ? 'md:py-8' : 'md:py-4 sm:py-8'}`}>
             {/* Hero */}
             <div className="text-center space-y-3 sm:space-y-4 max-w-2xl mx-auto">
               <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs sm:text-sm font-medium animate-fade-in">
@@ -152,7 +152,7 @@ function App() {
             )}
           </div>
         ) : (
-          <div className="w-full h-full overflow-auto">
+          <div className="w-full">
             <ReportViewer 
               report={report} 
               loading={loading}
