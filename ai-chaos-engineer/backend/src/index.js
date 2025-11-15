@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { runChaosTests } from './chaosTests.js';
 import { buildReport } from './reportBuilder.js';
 import { analyzeResults } from './aiAnalyzer.js';
@@ -11,6 +13,10 @@ import {
   sentryErrorHandler,
   sentryRequestHandler 
 } from './sentry.js';
+import { initWebSocket, getConnectionCount } from './realtime.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 dotenv.config();
 
@@ -24,9 +30,20 @@ app.use(cors());
 app.use(express.json());
 app.use(sentryRequestHandler());
 
+// Serve static files for real-time features
+app.use('/screenshots', express.static(join(__dirname, '../public/screenshots')));
+app.use('/videos', express.static(join(__dirname, '../public/videos')));
+
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'AI Chaos Engineer API is running' });
+  res.json({ 
+    status: 'ok', 
+    message: 'AI Chaos Engineer API is running',
+    websocket: {
+      enabled: true,
+      connections: getConnectionCount()
+    }
+  });
 });
 
 // Main chaos test endpoint
@@ -72,10 +89,16 @@ app.post('/run', async (req, res) => {
 // Sentry error handler (must be before other error handlers)
 app.use(sentryErrorHandler());
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 AI Chaos Engineer backend running on http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`📡 WebSocket endpoint: ws://localhost:${PORT}/ws`);
+  console.log(`📸 Screenshots: http://localhost:${PORT}/screenshots/`);
+  console.log(`🎥 Videos: http://localhost:${PORT}/videos/`);
 });
+
+// Initialize WebSocket on the same server
+initWebSocket(server);
 
 export default app;
 
