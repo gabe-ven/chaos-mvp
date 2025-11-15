@@ -1,14 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { runChaosTest } from '../lib/api';
 
 export default function RunForm({ onReportReceived, loading, setLoading, liveEvents = [] }) {
   const [url, setUrl] = useState('');
   const [error, setError] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const startTimeRef = useRef(null);
 
   const isValidUrl = (urlString) => {
     const trimmed = urlString.trim();
     return trimmed.length > 0 && /^https?:\/\/.+/.test(trimmed);
   };
+
+  // Timer effect for elapsed time
+  useEffect(() => {
+    let interval = null;
+    if (loading) {
+      startTimeRef.current = Date.now();
+      interval = setInterval(() => {
+        if (startTimeRef.current) {
+          setElapsedTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
+        }
+      }, 1000);
+    } else {
+      setElapsedTime(0);
+      startTimeRef.current = null;
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [loading]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,6 +51,7 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
 
     setError(null);
     setLoading(true);
+    setElapsedTime(0);
 
     try {
       const report = await runChaosTest(url);
@@ -39,6 +63,30 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
       setError(err.message || 'Failed to run health check');
       setLoading(false);
     }
+  };
+
+  // Count completed tests
+  const testNames = [
+    'Response Time',
+    'Concurrent Load',
+    'UI Health Check',
+    'Performance Consistency',
+    'Heavy Load Stress',
+    'Rate Limiting',
+    'Error Handling',
+    'Endpoint Resilience'
+  ];
+
+  const completedTests = testNames.filter(testName => {
+    const events = liveEvents.filter(e => e.testName === testName);
+    const event = events.length > 0 ? events[events.length - 1] : null;
+    return event && (event.status === 'passed' || event.status === 'failed');
+  }).length;
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -92,7 +140,23 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
       {loading && (
         <div className="border border-neutral-900 rounded-xl p-4 sm:p-6 space-y-3 sm:space-y-4">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <span className="text-xs sm:text-sm font-medium text-neutral-400">Running tests</span>
+            <div className="flex items-center gap-4">
+              <span className="text-xs sm:text-sm font-medium text-neutral-400">Running tests</span>
+              <div className="flex items-center gap-3 text-xs text-neutral-500">
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  <span>{formatTime(elapsedTime)}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{completedTests}/{testNames.length}</span>
+                </div>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
               <span className="text-xs text-neutral-500">Live</span>
@@ -100,16 +164,7 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
           </div>
 
           <div className="space-y-2">
-            {[
-              'Response Time',
-              'Concurrent Load',
-              'UI Health Check',
-              'Performance Consistency',
-              'Heavy Load Stress',
-              'Rate Limiting',
-              'Error Handling',
-              'Endpoint Resilience'
-            ].map((testName, idx) => {
+            {testNames.map((testName, idx) => {
               const events = liveEvents.filter(e => e.testName === testName);
               const event = events.length > 0 ? events[events.length - 1] : null;
               const status = event ? event.status : 'pending';
