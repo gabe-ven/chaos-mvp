@@ -6,6 +6,12 @@ function App() {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Handler to go back to the form (previous page)
+  const handleBackToForm = () => {
+    setReport(null);
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       {/* Header */}
@@ -61,27 +67,27 @@ function App() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-chaos-400 mt-0.5">🎨</span>
-                  <span><strong>UI Check:</strong> Validates URL accessibility and response time</span>
+                  <span><strong>UI Check:</strong> Validates accessibility, responsiveness, and errors</span>
                 </li>
               </ul>
             </div>
-          </div>
+          )}
 
-          {/* Right Column: Report */}
-          <div>
-            <ReportView report={report} loading={loading} />
-          </div>
+          {/* Info Section - Only show when no report */}
+          {!report && !loading && (
+            <div className="pt-8 border-t border-gray-100">
+              <p className="text-center text-xs text-gray-500 mb-4">What we test</p>
+              <div className="flex flex-wrap justify-center gap-6 text-xs text-gray-600">
+                <span>Latency Injection</span>
+                <span className="text-gray-300">•</span>
+                <span>Load Spike</span>
+                <span className="text-gray-300">•</span>
+                <span>UI Check</span>
+              </div>
+            </div>
+          )}
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="mt-12 border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <p className="text-center text-gray-500 text-sm">
-            Built with React, Tailwind CSS, and Express • 6-Hour MVP
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }
