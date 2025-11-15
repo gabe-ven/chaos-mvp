@@ -1,13 +1,50 @@
+/**
+ * RunForm Component
+ * 
+ * Main form component for submitting URLs and running chaos tests.
+ * Handles URL input, validation, submission, and displays real-time test progress.
+ * 
+ * Features:
+ * - URL validation and normalization
+ * - Real-time test progress tracking via WebSocket
+ * - Recent URLs quick access
+ * - Elapsed time display
+ * - Test status cards with live updates
+ * 
+ * @param {Object} props - Component props
+ * @param {Function} props.onReportReceived - Callback when test report is received
+ * @param {boolean} props.loading - Whether tests are currently running
+ * @param {Function} props.setLoading - Function to update loading state
+ * @param {Array} props.liveEvents - Array of live test progress events from WebSocket
+ */
 import { useState, useEffect, useRef } from 'react';
 import { runChaosTest } from '../lib/api';
+import { validateAndNormalizeUrl } from '../utils/urlValidator';
+import { addToRecentUrls, getRecentUrls } from '../utils/storage';
+import { formatDuration } from '../utils/formatUtils';
 
 export default function RunForm({ onReportReceived, loading, setLoading, liveEvents = [] }) {
+  /**
+   * Component State
+   * - url: Current URL input value
+   * - error: Error message to display (if any)
+   * - elapsedMs: Elapsed time in milliseconds since test started
+   */
   const [url, setUrl] = useState('');
   const [error, setError] = useState(null);
   const [elapsedMs, setElapsedMs] = useState(0);
+  
+  /**
+   * Timer reference for cleanup
+   * Used to track elapsed time during test execution
+   */
   const timerRef = useRef(null);
 
-  // Start/stop timer based on loading state
+  /**
+   * Timer Effect
+   * Starts/stops elapsed time counter based on loading state.
+   * Updates every 200ms for smooth time display.
+   */
   useEffect(() => {
     if (loading) {
       const start = Date.now();
@@ -33,38 +70,49 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
     };
   }, [loading]);
 
-  // Compute tests completed so far
-  const testDefinitions = [
-    'Response Time',
-    'Concurrent Load',
-    'Performance Consistency',
-    'Heavy Load Stress',
-    'Rate Limiting',
-    'Error Handling',
-    'Endpoint Resilience'
+  /**
+   * Test definitions - comprehensive list of all chaos tests
+   * Used for tracking progress and displaying test cards
+   */
+  const TEST_DEFINITIONS = [
+    { name: 'Response Time', color: 'yellow', description: 'Measures HTTP response latency' },
+    { name: 'Concurrent Load', color: 'blue', description: 'Tests handling of simultaneous requests' },
+    { name: 'UI Health Check', color: 'green', description: 'Validates UI accessibility and structure' },
+    { name: 'Performance Consistency', color: 'purple', description: 'Detects memory leaks and degradation' },
+    { name: 'Heavy Load Stress', color: 'orange', description: 'Stresses server CPU with large requests' },
+    { name: 'Rate Limiting', color: 'cyan', description: 'Tests rate limiting behavior' },
+    { name: 'Error Handling', color: 'red', description: 'Validates error recovery mechanisms' },
+    { name: 'Endpoint Resilience', color: 'indigo', description: 'Tests cascading failure scenarios' }
   ];
 
-  const testsCompleted = testDefinitions.filter((name) => {
-    const events = liveEvents.filter(e => e.testName === name);
+  /**
+   * Calculate number of completed tests based on live events
+   * A test is considered complete when it has a 'passed' or 'failed' status
+   */
+  const testsCompleted = TEST_DEFINITIONS.filter((test) => {
+    const events = liveEvents.filter(e => e.testName === test.name);
     const last = events.length > 0 ? events[events.length - 1] : null;
     return last && (last.status === 'passed' || last.status === 'failed');
   }).length;
 
+  /**
+   * Format elapsed time in seconds with one decimal place
+   */
   const elapsedSeconds = (elapsedMs / 1000).toFixed(1);
 
+  /**
+   * Handle form submission
+   * Validates URL, normalizes it, and initiates chaos tests
+   * @param {Event} e - Form submit event
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!url.trim()) {
-      setError('Please enter a URL');
-      return;
-    }
-
-    const trimmedUrl = url.trim();
-    const valid = /^https?:\/\/.+/.test(trimmedUrl);
+    // Validate and normalize URL
+    const validation = validateAndNormalizeUrl(url);
     
-    if (!valid) {
-      setError('Please enter a valid URL (e.g., https://example.com)');
+    if (!validation.isValid) {
+      setError(validation.error || 'Please enter a valid URL');
       return;
     }
 
@@ -72,7 +120,11 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
     setLoading(true);
 
     try {
-      const report = await runChaosTest(url);
+      // Save to recent URLs
+      addToRecentUrls(validation.normalized);
+      
+      // Run chaos tests with normalized URL
+      const report = await runChaosTest(validation.normalized);
       
       // Wait for all updates to be visible
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -84,14 +136,25 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
       
       onReportReceived(report);
     } catch (err) {
-      console.error('Test error:', err);
-      setError(err.message || 'Failed to run health check');
+      console.error('[RunForm] Test error:', err);
+      setError(err.message || 'Failed to run health check. Please ensure the backend is running and the URL is accessible.');
       setLoading(false);
     }
   };
 
-  // Simple URL validator for button disabled state
-  const isValidUrl = (value) => /^https?:\/\/.+/.test(value.trim());
+  /**
+   * Get recent URLs for quick access
+   */
+  const recentUrls = getRecentUrls(5);
+
+  /**
+   * Handle clicking a recent URL
+   * @param {string} recentUrl - URL to use
+   */
+  const handleRecentUrlClick = (recentUrl) => {
+    setUrl(recentUrl);
+    setError(null);
+  };
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-4 sm:space-y-6">
@@ -116,11 +179,31 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
 
         <button
           type="submit"
-          disabled={loading || !isValidUrl(url)}
+          disabled={loading || !validateAndNormalizeUrl(url).isValid}
           className="w-full bg-white hover:bg-neutral-100 text-black font-semibold py-3.5 sm:py-3.5 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
         >
           {loading ? 'Running...' : 'Start test'}
         </button>
+
+        {/* Recent URLs */}
+        {recentUrls.length > 0 && !loading && (
+          <div className="pt-2">
+            <p className="text-xs text-neutral-500 mb-2">Recent URLs:</p>
+            <div className="flex flex-wrap gap-2">
+              {recentUrls.map((recentUrl, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleRecentUrlClick(recentUrl)}
+                  className="px-3 py-1 text-xs bg-neutral-900/50 hover:bg-neutral-800 text-neutral-400 hover:text-white rounded-lg transition-colors border border-neutral-800"
+                  title={`Click to use: ${recentUrl}`}
+                >
+                  {recentUrl.length > 40 ? `${recentUrl.substring(0, 40)}...` : recentUrl}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </form>
 
       {/* Live Health Checks */}
@@ -138,7 +221,7 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
                 <div>
                   <h3 className="text-sm font-medium text-white">Running health checks</h3>
                   <p className="text-xs text-neutral-500">
-                    {testsCompleted} of {testDefinitions.length} tests completed
+                    {testsCompleted} of {TEST_DEFINITIONS.length} tests completed
                   </p>
                 </div>
               </div>
@@ -152,15 +235,8 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
 
           {/* Test Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              'Response Time',
-              'Concurrent Load',
-              'Performance Consistency',
-              'Heavy Load Stress',
-              'Rate Limiting',
-              'Error Handling',
-              'Endpoint Resilience'
-            ].map((name, idx) => {
+            {TEST_DEFINITIONS.map((test, idx) => {
+              const { name, color } = test;
               const events = liveEvents.filter(e => e.testName === name);
               const event = events.length > 0 ? events[events.length - 1] : null;
               const status = event ? event.status : 'pending';
