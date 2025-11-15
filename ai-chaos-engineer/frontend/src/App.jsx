@@ -11,16 +11,25 @@ function App() {
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-3">
-            <div className="text-4xl">🔥</div>
-            <div>
-              <h1 className="text-3xl font-bold text-white">
-                AI Chaos Engineer
-              </h1>
-              <p className="text-gray-400 text-sm mt-1">
-                Test your application's resilience with automated chaos engineering
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-4xl">🔥</div>
+              <div>
+                <h1 className="text-3xl font-bold text-white">
+                  AI Chaos Engineer
+                </h1>
+                <p className="text-gray-400 text-sm mt-1">
+                  Test your application's resilience with automated chaos engineering
+                </p>
+              </div>
             </div>
+            <a
+              href="/live"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2"
+            >
+              <span>📡</span>
+              <span>Live Dashboard</span>
+            </a>
           </div>
         </div>
       </header>
@@ -52,7 +61,7 @@ function App() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-chaos-400 mt-0.5">🎨</span>
-                  <span><strong>UI Check:</strong> Validates accessibility, responsiveness, and errors</span>
+                  <span><strong>UI Check:</strong> Validates URL accessibility and response time</span>
                 </li>
               </ul>
             </div>
