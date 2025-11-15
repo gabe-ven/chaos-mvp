@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * Fade In Animation
+ * Used for smooth entry animations on components
+ */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -17,6 +21,10 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+/**
+ * Shimmer Animation
+ * Used for loading states and active test indicators
+ */
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);
@@ -28,6 +36,97 @@
 
 .animate-shimmer {
   animation: shimmer 2s infinite;
+}
+
+/**
+ * Slide In Animation
+ * Used for test result cards and notifications
+ */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+/**
+ * Pulse Animation
+ * Used for active indicators and loading states
+ */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/**
+ * Spin Animation
+ * Used for loading spinners
+ */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/**
+ * Bounce Animation
+ * Used for attention-grabbing elements
+ */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+/**
+ * Scale In Animation
+ * Used for modal and dialog entrances
+ */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out;
 }
 
 @layer base {
@@ -62,7 +161,11 @@
     animation: fade-in 0.6s ease-out forwards;
   }
 
-  /* Custom scrollbar styles for desktop */
+  /**
+   * Custom Scrollbar Styles
+   * Provides consistent, styled scrollbars across the application
+   * Only applies on desktop for better UX
+   */
   @media (min-width: 768px) {
     .custom-scrollbar::-webkit-scrollbar {
       width: 8px;
@@ -76,16 +179,63 @@
     .custom-scrollbar::-webkit-scrollbar-thumb {
       background-color: rgb(64 64 64);
       border-radius: 4px;
+      transition: background-color 0.2s;
     }
 
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
       background-color: rgb(82 82 82);
     }
 
-    /* Firefox */
+    /* Firefox scrollbar styling */
     .custom-scrollbar {
       scrollbar-width: thin;
       scrollbar-color: rgb(64 64 64) transparent;
+    }
+  }
+
+  /**
+   * Focus Visible Styles
+   * Improves accessibility with visible focus indicators
+   */
+  *:focus-visible {
+    outline: 2px solid rgb(59 130 246);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /**
+   * Selection Styles
+   * Custom text selection colors for better visibility
+   */
+  ::selection {
+    background-color: rgb(59 130 246 / 0.3);
+    color: inherit;
+  }
+
+  ::-moz-selection {
+    background-color: rgb(59 130 246 / 0.3);
+    color: inherit;
+  }
+
+  /**
+   * Smooth Scrolling
+   * Enables smooth scrolling behavior throughout the app
+   */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /**
+   * Disable smooth scrolling for users who prefer reduced motion
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
     }
   }
 }
