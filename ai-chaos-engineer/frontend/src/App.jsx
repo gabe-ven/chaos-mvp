@@ -65,7 +65,7 @@ function App() {
                 External reliability checks for your site
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-white px-2">
-                90‑second health check
+                Site reliability check
               </h2>
               <p className="text-base sm:text-lg text-neutral-300 leading-relaxed px-2">
                 Point Strux at any URL and get a concise view of latency, load, error handling, and endpoint resilience.
