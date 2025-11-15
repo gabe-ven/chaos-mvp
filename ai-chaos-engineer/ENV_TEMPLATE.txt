@@ -1,0 +1,7 @@
+Create backend/.env with this content:
+
+PORT=3001
+DAYTONA_API_KEY=your_daytona_api_key_here
+DAYTONA_API_URL=https://api.daytona.io
+NODE_ENV=development
+
