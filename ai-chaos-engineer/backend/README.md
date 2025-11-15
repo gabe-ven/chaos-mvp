@@ -29,10 +29,24 @@ Create a `.env` file:
 
 ```env
 PORT=3001
+NODE_ENV=development
+
+# Daytona (optional - stubbed for MVP)
 DAYTONA_API_KEY=your_api_key
 DAYTONA_API_URL=https://api.daytona.io
-NODE_ENV=development
+
+# AI Analysis (optional - choose one)
+OPENAI_API_KEY=your_openai_key
+OPENAI_MODEL=gpt-4o-mini
+# OR
+ANTHROPIC_API_KEY=your_anthropic_key
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+
+# Error Tracking (optional)
+SENTRY_DSN=your_sentry_dsn
 ```
+
+**Note**: All API keys are optional. The system will work with fallback logic if keys are not provided.
 
 ## API Endpoints
 

@@ -64,9 +64,38 @@ export default function ReportView({ report, loading }) {
         </div>
       </div>
 
+      {/* AI Summary (if available) */}
+      {report.aiSummary && (
+        <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg shadow-xl p-6 border border-purple-500/30">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-2xl">🤖</span>
+            <h3 className="text-lg font-semibold text-white">AI Analysis</h3>
+          </div>
+          <p className="text-gray-200 leading-relaxed">{report.aiSummary}</p>
+        </div>
+      )}
+
+      {/* Recommendations (if available) */}
+      {report.recommendations && report.recommendations.length > 0 && (
+        <div className="bg-gray-800 rounded-lg shadow-xl p-6 border border-gray-700">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xl">💡</span>
+            <h3 className="text-lg font-semibold text-white">Recommendations</h3>
+          </div>
+          <ul className="space-y-2">
+            {report.recommendations.map((rec, idx) => (
+              <li key={idx} className="flex items-start gap-3 text-gray-300">
+                <span className="text-chaos-400 mt-1 flex-shrink-0">→</span>
+                <span>{rec}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Summary */}
       <div className="bg-gray-800 rounded-lg shadow-xl p-6 border border-gray-700">
-        <h3 className="text-lg font-semibold text-white mb-3">Summary</h3>
+        <h3 className="text-lg font-semibold text-white mb-3">Test Summary</h3>
         <p className="text-gray-300">{report.summary}</p>
         
         {report.raw?.totalDuration && (

@@ -1,7 +1,9 @@
 /**
  * Builds a final report with stability score and summary
+ * @param {Object} testResults - Raw test results
+ * @param {Object} aiAnalysis - Optional AI-generated analysis
  */
-export function buildReport(testResults) {
+export function buildReport(testResults, aiAnalysis = null) {
   if (testResults.error) {
     return {
       score: 0,
@@ -57,7 +59,8 @@ export function buildReport(testResults) {
   else if (score >= 40) status = 'Fair';
   else status = 'Poor';
   
-  return {
+  // Build final report with optional AI analysis
+  const report = {
     score,
     status,
     summary,
@@ -69,6 +72,14 @@ export function buildReport(testResults) {
       timestamp: new Date().toISOString()
     }
   };
+
+  // Add AI analysis if available
+  if (aiAnalysis) {
+    report.aiSummary = aiAnalysis.aiSummary;
+    report.recommendations = aiAnalysis.recommendations;
+  }
+
+  return report;
 }
 
 

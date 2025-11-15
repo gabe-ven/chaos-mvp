@@ -1,15 +1,16 @@
 {
   "name": "ai-chaos-engineer-backend",
   "version": "1.0.0",
-  "description": "Backend API for AI Chaos Engineer MVP",
+  "description": "Backend API for AI Chaos Engineer MVP with LLM analysis and Sentry tracking",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
-  "keywords": ["chaos", "engineering", "testing"],
+  "keywords": ["chaos", "engineering", "testing", "ai", "openai", "claude", "sentry"],
   "author": "",
   "license": "MIT",
   "dependencies": {
@@ -19,8 +20,8 @@
   },
   "devDependencies": {
     "jest": "^29.7.0"
+  },
+  "optionalDependencies": {
+    "@sentry/node": "^7.80.0"
   }
 }
-
-
-
