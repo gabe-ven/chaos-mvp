@@ -42,9 +42,9 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-6">
+    <div className="w-full max-w-3xl mx-auto space-y-4 sm:space-y-6">
       {/* Input Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
         <div className="relative group">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300"></div>
           <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity duration-300"></div>
@@ -52,14 +52,14 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="Enter website URL (e.g., https://example.com)"
-            className="relative w-full px-6 py-4 bg-neutral-900/80 backdrop-blur-sm border-2 border-neutral-800 rounded-xl text-white placeholder-neutral-500 hover:border-neutral-700 focus:outline-none focus:border-blue-500 focus:shadow-[0_0_25px_rgba(59,130,246,0.4)] focus:shadow-blue-500/40 transition-all duration-300 text-base"
+            placeholder="Enter website URL"
+            className="relative w-full px-4 sm:px-6 py-3 sm:py-4 bg-neutral-900/80 backdrop-blur-sm border-2 border-neutral-800 rounded-xl text-white placeholder-neutral-500 hover:border-neutral-700 focus:outline-none focus:border-blue-500 focus:shadow-[0_0_25px_rgba(59,130,246,0.4)] focus:shadow-blue-500/40 transition-all duration-300 text-sm sm:text-base"
             disabled={loading}
           />
         </div>
 
         {error && (
-          <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm animate-fade-in">
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs sm:text-sm animate-fade-in">
             {error}
           </div>
         )}
@@ -67,7 +67,7 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
         <button
           type="submit"
           disabled={loading || !isValidUrl(url)}
-          className="relative w-full bg-gradient-to-r from-white to-neutral-100 hover:from-blue-50 hover:to-white text-black font-semibold py-4 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-lg shadow-white/10 hover:shadow-xl hover:shadow-white/20 disabled:hover:shadow-lg disabled:hover:shadow-white/10 transform hover:scale-[1.02] disabled:hover:scale-100"
+          className="relative w-full bg-gradient-to-r from-white to-neutral-100 hover:from-blue-50 hover:to-white text-black font-semibold py-3.5 sm:py-4 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base shadow-lg shadow-white/10 hover:shadow-xl hover:shadow-white/20 disabled:hover:shadow-lg disabled:hover:shadow-white/10 transform hover:scale-[1.02] disabled:hover:scale-100"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
@@ -90,9 +90,9 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
 
       {/* Live Test Progress */}
       {loading && (
-        <div className="border border-neutral-900 rounded-xl p-6 space-y-4">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-neutral-400">Running tests</span>
+        <div className="border border-neutral-900 rounded-xl p-4 sm:p-6 space-y-3 sm:space-y-4">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <span className="text-xs sm:text-sm font-medium text-neutral-400">Running tests</span>
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
               <span className="text-xs text-neutral-500">Live</span>
@@ -117,17 +117,17 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
               return (
                 <div 
                   key={idx} 
-                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-neutral-900/50"
+                  className="flex items-center justify-between py-2 px-2 sm:px-3 rounded-lg bg-neutral-900/50"
                 >
-                  <div className="flex-1">
-                    <div className="text-sm text-neutral-300">{testName}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs sm:text-sm text-neutral-300 truncate">{testName}</div>
                     {event && event.details?.action && (
                       <div className="text-xs text-neutral-600 mt-0.5 truncate">
                         {event.details.action}
                       </div>
                     )}
                   </div>
-                  <div className="flex-shrink-0 ml-4">
+                  <div className="flex-shrink-0 ml-2 sm:ml-4">
                     {status === 'pending' && (
                       <div className="w-2 h-2 rounded-full bg-neutral-700"></div>
                     )}
