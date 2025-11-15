@@ -9,6 +9,7 @@ function App() {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
   const [liveEvents, setLiveEvents] = useState([]);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
   const { isConnected, lastMessage } = useWebSocket(WS_URL);
 
@@ -26,6 +27,16 @@ function App() {
     setReport(null);
     setLoading(false);
     setLiveEvents([]);
+    setShowConfirmDialog(false);
+  };
+
+  const handleHeaderClick = () => {
+    // Only show confirmation if there's an active analysis
+    if (loading || report) {
+      setShowConfirmDialog(true);
+    } else {
+      handleBackToForm();
+    }
   };
 
   return (
@@ -42,7 +53,7 @@ function App() {
       <header className="border-b border-neutral-900 bg-black/80 backdrop-blur-xl z-10 flex-shrink-0">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <button
-            onClick={handleBackToForm}
+            onClick={handleHeaderClick}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200 focus:outline-none rounded-lg px-2 py-1 -ml-2"
           >
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
@@ -149,6 +160,32 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl animate-fade-in">
+            <h3 className="text-lg font-semibold text-white mb-2">Stop Analysis?</h3>
+            <p className="text-sm text-neutral-400 mb-6">
+              Are you sure you want to go back to the homepage? This will stop the current analysis.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                No
+              </button>
+              <button
+                onClick={handleBackToForm}
+                className="px-4 py-2 bg-white hover:bg-neutral-100 text-black rounded-lg transition-colors text-sm font-medium"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
