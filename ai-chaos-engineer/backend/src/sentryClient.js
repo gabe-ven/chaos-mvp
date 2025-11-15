@@ -141,3 +141,72 @@ export function sentryRequestHandler() {
   };
 }
 
+/**
+ * Start a Sentry transaction for a Strux run
+ */
+export function startTransaction(name, tags = {}, data = {}) {
+  if (!sentryInitialized || !Sentry || !Sentry.startTransaction) {
+    return null;
+  }
+
+  const transaction = Sentry.startTransaction({
+    name,
+    op: 'strux.run',
+    tags
+  });
+
+  // Attach to current scope so child spans are associated
+  Sentry.getCurrentHub().configureScope((scope) => {
+    scope.setSpan(transaction);
+    Object.entries(tags || {}).forEach(([key, value]) => scope.setTag(key, value));
+    if (data && Object.keys(data).length > 0) {
+      scope.setContext('run', data);
+    }
+  });
+
+  console.log('[Sentry] Transaction started:', name, tags);
+  return transaction;
+}
+
+/**
+ * Finish a Sentry transaction
+ */
+export function finishTransaction(transaction, status = 'ok') {
+  if (transaction && typeof transaction.finish === 'function') {
+    if (typeof transaction.setStatus === 'function') {
+      transaction.setStatus(status);
+    }
+    transaction.finish();
+    console.log('[Sentry] Transaction finished:', transaction.name, status);
+  }
+}
+
+/**
+ * Start a child span for an individual test
+ */
+export function startTestSpan(transaction, testName, data = {}) {
+  if (!transaction || typeof transaction.startChild !== 'function') {
+    return null;
+  }
+  const span = transaction.startChild({
+    op: 'strux.test',
+    description: testName,
+    data
+  });
+  console.log('[Sentry] Test span started:', testName);
+  return span;
+}
+
+/**
+ * Finish a test span
+ */
+export function finishTestSpan(span, status = 'ok') {
+  if (span && typeof span.finish === 'function') {
+    if (typeof span.setStatus === 'function') {
+      span.setStatus(status);
+    }
+    span.finish();
+    console.log('[Sentry] Test span finished:', span.description, status);
+  }
+}
+

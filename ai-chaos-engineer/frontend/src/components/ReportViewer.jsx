@@ -47,6 +47,11 @@ export default function ReportViewer({ report, loading, onBack }) {
         <div className="mt-3 text-xs text-neutral-500">
           Higher scores indicate better uptime, performance, and resilience under load.
         </div>
+        {report.raw?.runId && (
+          <div className="mt-4 text-[11px] text-neutral-600 font-mono">
+            Run ID: <span className="text-neutral-400">{report.raw.runId}</span>
+          </div>
+        )}
       </div>
 
       {/* Stats Grid */}
@@ -89,7 +94,7 @@ export default function ReportViewer({ report, loading, onBack }) {
       {/* Test Results */}
       {report.raw?.tests && (
         <div className="border border-neutral-900 rounded-xl p-6">
-          <h3 className="text-sm font-medium text-neutral-400 mb-4">Test Results</h3>
+          <h3 className="text-sm font-medium text-neutral-400 mb-4">Test results</h3>
           <div className="space-y-2">
             {report.raw.tests.map((test, idx) => (
               <div key={idx} className="flex items-center justify-between py-3 px-4 bg-neutral-900/30 rounded-lg">
@@ -103,6 +108,24 @@ export default function ReportViewer({ report, loading, onBack }) {
                     {test.passed ? '✓' : '✗'}
                   </span>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Browser walkthrough (Browser Use) */}
+      {report.raw?.browserWalkthrough && report.raw.browserWalkthrough.details?.actions && (
+        <div className="border border-neutral-900 rounded-xl p-6">
+          <h3 className="text-sm font-medium text-neutral-400 mb-3">Browser walkthrough</h3>
+          <p className="text-xs text-neutral-500 mb-3">
+            Headless browser session steps captured during the UI check.
+          </p>
+          <div className="space-y-1.5 max-h-64 overflow-y-auto text-xs text-neutral-300">
+            {report.raw.browserWalkthrough.details.actions.map((step, idx) => (
+              <div key={idx} className="flex items-start gap-2">
+                <span className="mt-0.5 text-neutral-600">•</span>
+                <span>{step}</span>
               </div>
             ))}
           </div>

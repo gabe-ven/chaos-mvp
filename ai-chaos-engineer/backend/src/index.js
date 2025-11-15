@@ -2,15 +2,19 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
+import crypto from 'crypto';
 import { runChaosTests } from './chaosTests.js';
 import { buildReport } from './reportBuilder.js';
 import { analyzeResults } from './llmClient.js';
 import { 
   initSentry, 
   captureException, 
+  captureMessage,
   addBreadcrumb,
   sentryErrorHandler,
-  sentryRequestHandler 
+  sentryRequestHandler,
+  startTransaction,
+  finishTransaction
 } from './sentryClient.js';
 import { initWebSocket, notifyTestStart, notifyTestComplete } from './websocket.js';
 
@@ -37,6 +41,7 @@ app.get('/health', (req, res) => {
 
 // Main chaos test endpoint
 app.post('/run', async (req, res) => {
+  let transaction = null;
   try {
     const { url } = req.body;
 
@@ -110,13 +115,26 @@ app.post('/run', async (req, res) => {
     }
 
     console.log(`✓ URL verified, running chaos tests for: ${url}`);
-    addBreadcrumb(`Starting chaos test for ${url}`, 'chaos-test');
+
+    // Generate a stable run ID to tie UI and Sentry together
+    const runId = crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    addBreadcrumb(`Starting chaos test for ${url}`, 'chaos-test', { runId });
+
+    // Start Sentry transaction for this run
+    transaction = startTransaction('Strux /run', { 
+      url: trimmedUrl,
+      mode: 'url',
+      run_id: runId
+    }, { url: trimmedUrl, runId });
 
     // Notify clients that tests are starting
     notifyTestStart(url);
 
-    // Run all chaos tests
-    const testResults = await runChaosTests(url);
+    // Run all chaos tests (URL-only health checks)
+    const testResults = await runChaosTests(url, { transaction });
 
     // Get AI analysis with live updates
     const { notifyAIProgress } = await import('./websocket.js');
@@ -137,10 +155,23 @@ app.post('/run', async (req, res) => {
       notifyAIProgress('error', 'AI analysis failed - continuing without recommendations');
     }
 
-    // Build the final report with score
-    const report = buildReport(testResults, aiAnalysis);
+    // Build the final report with score (no Browser Use walkthrough)
+    const report = buildReport(testResults, aiAnalysis, { runId });
 
     addBreadcrumb('Chaos test completed successfully', 'chaos-test', { score: report.score });
+
+    // Record summary in Sentry as a message with tags
+    captureMessage('Strux run complete', 'info', {
+      url: trimmedUrl,
+      score: report.score,
+      status: report.status,
+      passedTests: report.raw?.tests?.filter(t => t.passed).length || 0,
+      failedTests: report.raw?.tests?.filter(t => !t.passed).length || 0,
+      runId
+    });
+
+    // Finish transaction as success
+    finishTransaction(transaction, 'ok');
     
     // Notify clients that tests are complete
     notifyTestComplete(report);
@@ -149,6 +180,11 @@ app.post('/run', async (req, res) => {
   } catch (error) {
     console.error('Error running chaos tests:', error);
     captureException(error, { url: req.body.url });
+
+    // Mark transaction as failed, if it exists
+    if (transaction) {
+      finishTransaction(transaction, 'internal_error');
+    }
     res.status(500).json({
       error: 'Failed to run chaos tests',
       message: error.message

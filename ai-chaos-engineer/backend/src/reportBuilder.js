@@ -2,8 +2,9 @@
  * Builds a final report with stability score and summary
  * @param {Object} testResults - Raw test results
  * @param {Object} aiAnalysis - Optional AI-generated analysis
+ * @param {Object} meta - Optional metadata (e.g., runId)
  */
-export function buildReport(testResults, aiAnalysis = null) {
+export function buildReport(testResults, aiAnalysis = null, meta = {}) {
   if (testResults.error) {
     return {
       score: 0,
@@ -69,6 +70,7 @@ export function buildReport(testResults, aiAnalysis = null) {
       url,
       totalDuration,
       tests,
+      runId: meta.runId,
       timestamp: new Date().toISOString()
     }
   };

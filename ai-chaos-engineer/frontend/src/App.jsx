@@ -18,7 +18,7 @@ function App() {
       if (lastMessage.type === 'test_progress') {
         setLiveEvents(prev => [...prev, lastMessage]);
       } else if (lastMessage.type === 'test_start') {
-        setLiveEvents([]);        
+        setLiveEvents([]);
       }
     }
   }, [lastMessage]);

@@ -1,5 +1,6 @@
 import { checkUI as checkUIBrowser } from './browserClient.js';
 import { sleep } from './utils/timers.js';
+import { startTestSpan, finishTestSpan } from './sentryClient.js';
 
 /**
  * Tests actual response time by making real HTTP requests
@@ -627,9 +628,12 @@ export async function cascadingFailureTest(url, notifyProgress = null) {
 
 /**
  * Runs all chaos tests directly on the provided URL
+ * Optionally accepts a Sentry transaction for per-test spans
  */
-export async function runChaosTests(url) {
+export async function runChaosTests(url, options = {}) {
   console.log(`\n[Tests] Starting health checks for: ${url}\n`);
+  
+  const { transaction } = options || {};
   
   // Import WebSocket notification
   const { notifyTestProgress } = await import('./websocket.js');
@@ -637,7 +641,7 @@ export async function runChaosTests(url) {
   // Run tests sequentially so we can notify progress for each one
   const tests = [];
   
-  // All technical health checks (NO Browser Use)
+  // All technical health checks
   const testFunctions = [
     { name: 'Response Time', fn: injectLatency },
     { name: 'Concurrent Load', fn: loadSpike },
@@ -650,9 +654,13 @@ export async function runChaosTests(url) {
   
   for (let i = 0; i < testFunctions.length; i++) {
     const { name, fn } = testFunctions[i];
+    let span = null;
     
     try {
       console.log(`[Tests] Running ${name} (${i + 1}/${testFunctions.length})...`);
+      
+      // Start Sentry span for this test
+      span = startTestSpan(transaction, name, { url });
       
       // Notify test is starting
       notifyTestProgress(name, 'running', { action: 'Initializing test' });
@@ -673,6 +681,9 @@ export async function runChaosTests(url) {
         details: result.details
       });
       
+      // Finish Sentry span
+      finishTestSpan(span, result.passed ? 'ok' : 'error');
+      
       // Small delay between tests
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
@@ -691,6 +702,9 @@ export async function runChaosTests(url) {
         duration: 0,
         message: `Test error: ${error.message}`
       });
+      
+      // Finish span with error
+      finishTestSpan(span, 'error');
     }
   }
   
