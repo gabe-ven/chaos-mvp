@@ -118,14 +118,23 @@ app.post('/run', async (req, res) => {
     // Run all chaos tests
     const testResults = await runChaosTests(url);
 
-    // Get AI analysis
+    // Get AI analysis with live updates
+    const { notifyAIProgress } = await import('./websocket.js');
     let aiAnalysis = null;
     try {
       addBreadcrumb('Running AI analysis', 'ai');
+      
+      // Notify start of AI analysis
+      notifyAIProgress('analyzing', 'Analyzing test results with AI...');
+      
       aiAnalysis = await analyzeResults(testResults);
+      
+      // Notify completion
+      notifyAIProgress('complete', 'AI analysis complete');
     } catch (aiError) {
       console.error('AI analysis failed, continuing without it:', aiError.message);
       captureException(aiError, { context: 'AI Analysis' });
+      notifyAIProgress('error', 'AI analysis failed - continuing without recommendations');
     }
 
     // Build the final report with score

@@ -17,7 +17,7 @@ function App() {
       if (lastMessage.type === 'test_progress') {
         setLiveEvents(prev => [...prev, lastMessage]);
       } else if (lastMessage.type === 'test_start') {
-        setLiveEvents([]);
+        setLiveEvents([]);        
       }
     }
   }, [lastMessage]);
@@ -32,21 +32,8 @@ function App() {
     <div className="min-h-screen bg-black text-white">
       {/* Minimal Header */}
       <header className="border-b border-neutral-900 bg-black/80 backdrop-blur-xl sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-neutral-200">Site Reliability Monitor</span>
-          </div>
-          {isConnected && (
-            <div className="flex items-center gap-2 text-xs text-neutral-500">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-              <span>Live</span>
-            </div>
-          )}
+        <div className="max-w-5xl mx-auto px-6 py-4">
+          <h1 className="text-xxl font-semibold tracking-tight text-white">Strux</h1>
         </div>
       </header>
 
@@ -76,16 +63,16 @@ function App() {
             {!loading && (
               <div className="grid grid-cols-3 gap-8 text-center pt-8">
                 <div>
-                  <div className="text-3xl font-semibold text-white mb-2">8</div>
-                  <div className="text-sm text-neutral-500">Real-time tests</div>
+                  <div className="text-3xl font-semibold text-white mb-2">7</div>
+                  <div className="text-sm text-neutral-500">Health checks</div>
                 </div>
                 <div>
                   <div className="text-3xl font-semibold text-white mb-2">90s</div>
                   <div className="text-sm text-neutral-500">Complete analysis</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-semibold text-white mb-2">AI</div>
-                  <div className="text-sm text-neutral-500">Smart insights</div>
+                  <div className="text-3xl font-semibold text-white mb-2">Live</div>
+                  <div className="text-sm text-neutral-500">Streaming updates</div>
                 </div>
               </div>
             )}

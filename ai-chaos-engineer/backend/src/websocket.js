@@ -40,19 +40,33 @@ export function initWebSocket(server) {
  * Broadcast message to all connected clients
  */
 export function broadcast(data) {
-  if (!wss) return;
+  if (!wss) {
+    console.log('[WebSocket] No WSS instance, cannot broadcast');
+    return;
+  }
+  
+  if (clients.size === 0) {
+    console.log('[WebSocket] No connected clients');
+    return;
+  }
   
   const message = JSON.stringify(data);
+  let sent = 0;
   
   clients.forEach((client) => {
     if (client.readyState === 1) { // OPEN
       try {
         client.send(message);
+        sent++;
       } catch (error) {
         console.error('[WebSocket] Failed to send:', error.message);
       }
     }
   });
+  
+  if (data.type === 'browser_action') {
+    console.log(`[WebSocket] Broadcast to ${sent} clients: ${data.action}`);
+  }
 }
 
 /**
@@ -101,6 +115,19 @@ export function notifyChaosInjected(chaosType, details) {
     type: 'chaos_injected',
     chaosType,
     details,
+    timestamp: new Date().toISOString()
+  });
+}
+
+/**
+ * Send AI analysis progress update
+ */
+export function notifyAIProgress(status, message) {
+  console.log('[WebSocket] AI Progress:', status, message);
+  broadcast({
+    type: 'ai_progress',
+    status, // 'analyzing', 'complete', 'error'
+    message,
     timestamp: new Date().toISOString()
   });
 }

@@ -39,6 +39,12 @@ export async function initSentry() {
         ],
         // Suppress DSN validation errors
         beforeSend(event, hint) {
+          // Add custom tags for better filtering
+          event.tags = {
+            ...event.tags,
+            component: 'site-reliability-monitor',
+            version: '1.0.0'
+          };
           return event;
         }
       });

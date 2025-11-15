@@ -1,46 +1,251 @@
 /**
- * Browser automation for real UI checks using Puppeteer
+ * Browser automation for real UI checks
+ * Integrates with Browser Use AI service for intelligent testing
  */
+
+import WebSocket from 'ws';
+import { broadcast } from './websocket.js';
 
 let puppeteer = null;
 let USE_REAL_BROWSER = false;
 
-// Try to load Puppeteer
+// Try to load Puppeteer as fallback
 try {
   puppeteer = await import('puppeteer');
   USE_REAL_BROWSER = true;
-  console.log('[Browser] Puppeteer loaded - real UI checks enabled');
+  console.log('[Browser] Puppeteer loaded - available as fallback');
 } catch (error) {
-  console.log('[Browser] Puppeteer not installed - using stub UI checks');
-  console.log('[Browser] Run: npm install puppeteer');
+  console.log('[Browser] Puppeteer not installed - Browser Use will be primary');
+}
+
+const BROWSER_USE_SERVICE = process.env.BROWSER_USE_SERVICE_URL || 'http://localhost:3002';
+const BROWSER_USE_WS = BROWSER_USE_SERVICE.replace('http', 'ws') + '/ws';
+
+/**
+ * Connect to Browser Use WebSocket for real-time action streaming
+ */
+function connectToBrowserUseWebSocket() {
+  return new Promise((resolve, reject) => {
+    console.log('[Browser Use] Connecting to WebSocket:', BROWSER_USE_WS);
+    const ws = new WebSocket(BROWSER_USE_WS);
+    
+    let isResolved = false;
+    const timeout = setTimeout(() => {
+      if (!isResolved) {
+        console.log('[Browser Use] WebSocket connection timeout');
+        reject(new Error('WebSocket connection timeout'));
+      }
+    }, 5000);
+    
+    ws.on('open', () => {
+      isResolved = true;
+      clearTimeout(timeout);
+      console.log('[Browser Use] WebSocket connected successfully');
+      resolve(ws);
+    });
+    
+    ws.on('message', (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        console.log('[Browser Use] Received message:', message.type, message.action);
+        
+        if (message.type === 'browser_action') {
+          // Relay to frontend via backend WebSocket
+          broadcast(message);
+          console.log(`[Browser Use] → Frontend: ${message.action} - ${message.message}`);
+        }
+      } catch (e) {
+        console.error('[Browser Use] Parse error:', e);
+      }
+    });
+    
+    ws.on('error', (error) => {
+      console.log('[Browser Use] WebSocket error:', error.message);
+      if (!isResolved) {
+        isResolved = true;
+        clearTimeout(timeout);
+        reject(error);
+      }
+    });
+    
+    ws.on('close', () => {
+      console.log('[Browser Use] WebSocket closed');
+    });
+  });
 }
 
 /**
- * Perform real UI checks using browser automation
+ * Check UI using Browser Use AI service with live streaming
  */
-export async function checkUI(url) {
-  if (USE_REAL_BROWSER && puppeteer) {
-    return await checkUIReal(url);
-  } else {
-    return await checkUIStub(url);
+async function checkUIWithBrowserUse(url) {
+  let ws = null;
+  
+  try {
+    // First, check if service is available
+    console.log('[Browser Use] Checking service availability...');
+    const healthCheck = await fetch(`${BROWSER_USE_SERVICE}/health`, { 
+      signal: AbortSignal.timeout(3000) 
+    }).catch(() => null);
+    
+    if (!healthCheck || !healthCheck.ok) {
+      console.log('[Browser Use] Service not available - will use fallback');
+      return null;
+    }
+    
+    console.log('[Browser Use] Service available');
+    
+    // Start WebSocket connection (but don't wait if it fails)
+    console.log('[Browser Use] Attempting WebSocket connection...');
+    ws = await connectToBrowserUseWebSocket().catch((err) => {
+      console.log('[Browser Use] WebSocket failed, continuing anyway:', err.message);
+      return null;
+    });
+    
+    if (ws) {
+      console.log('[Browser Use] WebSocket connected, live updates enabled');
+      
+      // Keep WebSocket alive during the entire check
+      const keepAlive = setInterval(() => {
+        if (ws.readyState === 1) { // OPEN
+          ws.ping();
+        }
+      }, 10000); // Ping every 10 seconds
+      
+      // Store keepAlive interval for cleanup
+      ws.keepAliveInterval = keepAlive;
+      
+      await new Promise(resolve => setTimeout(resolve, 300));
+    } else {
+      console.log('[Browser Use] No WebSocket, will provide basic updates');
+    }
+    
+    // Notify frontend we're starting
+    console.log('[Browser Use] Sending start notification to frontend');
+    broadcast({
+      type: 'browser_action',
+      action: 'starting',
+      message: 'Starting AI browser analysis',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Make HTTP request to start UI check
+    console.log('[Browser Use] Starting UI check HTTP request...');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      console.log('[Browser Use] Request timeout!');
+      controller.abort();
+    }, 60000); // 60s timeout
+    
+    const response = await fetch(`${BROWSER_USE_SERVICE}/ui-check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url,
+        task: 'Run comprehensive website health check. Navigate, test links, check forms, find errors, assess UX.'
+      }),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeout);
+    
+    if (!response.ok) {
+      throw new Error(`Service returned ${response.status}`);
+    }
+    
+    const result = await response.json();
+    console.log('[Browser Use] Analysis complete:', result.passed ? 'PASS' : 'FAIL');
+    
+    // Final update
+    console.log('[Browser Use] Sending completion notification to frontend');
+    broadcast({
+      type: 'browser_action',
+      action: 'complete',
+      message: result.message || 'Analysis complete',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Give time for final messages to be relayed
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Close WebSocket and cleanup
+    if (ws) {
+      if (ws.keepAliveInterval) {
+        clearInterval(ws.keepAliveInterval);
+      }
+      ws.close();
+      console.log('[Browser Use] WebSocket closed after analysis');
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('[Browser Use] Error:', error.message);
+    
+    if (ws) {
+      if (ws.keepAliveInterval) {
+        clearInterval(ws.keepAliveInterval);
+      }
+      ws.close();
+    }
+    
+    console.log('[Browser Use] Sending error notification to frontend');
+    broadcast({
+      type: 'browser_action',
+      action: 'error',
+      message: `Analysis failed: ${error.message}`,
+      timestamp: new Date().toISOString()
+    });
+    
+    return null;
   }
 }
 
 /**
- * Real browser-based UI check
+ * Main UI check function (tries Browser Use first, falls back to Puppeteer)
  */
-async function checkUIReal(url) {
+export async function checkUI(url) {
   const startTime = Date.now();
+  
+  // Try Browser Use first (AI-powered)
+  const browserUseResult = await checkUIWithBrowserUse(url);
+  
+  if (browserUseResult) {
+    return {
+      test: 'UI Check (Browser)',
+      passed: browserUseResult.passed,
+      duration: Date.now() - startTime,
+      message: browserUseResult.message,
+      severity: browserUseResult.passed ? 'low' : 'medium',
+      details: {
+        ...browserUseResult.details,
+        method: '🤖 AI-Powered (Browser Use)'
+      }
+    };
+  }
+  
+  // Fallback to Puppeteer
+  if (USE_REAL_BROWSER && puppeteer) {
+    console.log('[Browser] Falling back to Puppeteer');
+    return await checkUIWithPuppeteer(url, startTime);
+  }
+  
+  // Final fallback: stub
+  console.log('[Browser] No browser automation available - using stub');
+  return await checkUIStub(url, startTime);
+}
+
+/**
+ * Puppeteer-based UI check (fallback)
+ */
+async function checkUIWithPuppeteer(url, startTime) {
   let browser = null;
   
   try {
-    console.log(`[Browser] Launching browser for ${url}...`);
+    console.log(`[Browser] Launching Puppeteer for ${url}...`);
     
-    // Launch browser - set headless:false to see live browser window!
     const isLiveMode = process.env.BROWSER_LIVE === 'true';
     
     browser = await puppeteer.launch({
-      headless: isLiveMode ? false : 'new', // Show browser if BROWSER_LIVE=true
+      headless: isLiveMode ? false : 'new',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -51,30 +256,16 @@ async function checkUIReal(url) {
         '--disable-gpu'
       ],
       ...(isLiveMode && {
-        slowMo: 100, // Slow down actions so you can see them
+        slowMo: 100,
         devtools: false
       })
     });
     
-    if (isLiveMode) {
-      console.log('[Browser] 🎥 LIVE MODE: Browser window visible!');
-    }
-    
     const page = await browser.newPage();
     
-    // Set realistic user agent to avoid bot detection
     await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-    
-    // Set viewport
     await page.setViewport({ width: 1920, height: 1080 });
     
-    // Set extra HTTP headers
-    await page.setExtraHTTPHeaders({
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-    });
-    
-    // Collect console errors
     const consoleErrors = [];
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
@@ -82,72 +273,22 @@ async function checkUIReal(url) {
       }
     });
     
-    // Collect network errors
     const networkErrors = [];
     page.on('requestfailed', (request) => {
       networkErrors.push(`${request.url()} - ${request.failure().errorText}`);
     });
     
-    // Navigate to URL with better error handling
     console.log(`[Browser] Navigating to ${url}...`);
     
-    let response;
-    try {
-      response = await page.goto(url, {
-        waitUntil: 'load', // Wait for load event
-        timeout: 30000 // 30 second timeout
-      });
-      
-      console.log(`[Browser] Page loaded with status: ${response.status()}`);
-    } catch (navError) {
-      console.error(`[Browser] Navigation error: ${navError.message}`);
-      
-      // Try to get page content even if navigation failed
-      const pageContent = await page.content().catch(() => '<html></html>');
-      const hasContent = pageContent.length > 100;
-      
-      await browser.close();
-      const duration = Date.now() - startTime;
-      
-      // If page loaded some content, it's partially working
-      if (hasContent) {
-        return {
-          test: 'UI Check (Browser)',
-          passed: false,
-          duration,
-          message: `Page loaded with errors: ${navError.message} (site may have bot protection or strict security)`,
-          severity: 'medium',
-          details: {
-            error: navError.message,
-            urlTested: url,
-            browserCheck: 'Partial load',
-            contentLength: pageContent.length
-          }
-        };
-      }
-      
-      return {
-        test: 'UI Check (Browser)',
-        passed: false,
-        duration,
-        message: `Browser navigation failed: ${navError.message} (site may block automated browsers)`,
-        severity: 'high',
-        details: {
-          error: navError.message,
-          urlTested: url,
-          browserCheck: 'Failed to connect',
-          suggestion: 'Site may have bot protection or firewall rules'
-        }
-      };
-    }
+    const response = await page.goto(url, {
+      waitUntil: 'load',
+      timeout: 30000
+    });
     
-    // Check if page loaded
     const statusCode = response.status();
     const pageLoaded = statusCode >= 200 && statusCode < 400;
     
-    // Check accessibility
     const accessibilityChecks = await page.evaluate(() => {
-      // Check for basic accessibility features
       const hasTitle = !!document.title;
       const hasH1 = document.querySelectorAll('h1').length > 0;
       const hasLang = !!document.documentElement.lang;
@@ -161,7 +302,6 @@ async function checkUIReal(url) {
       };
     });
     
-    // Check responsiveness (test mobile viewport)
     await page.setViewport({ width: 375, height: 667 });
     await page.waitForTimeout(500);
     
@@ -171,7 +311,6 @@ async function checkUIReal(url) {
       return hasViewport && hasResponsiveElements;
     });
     
-    // Calculate results
     const duration = Date.now() - startTime;
     const accessible = Object.values(accessibilityChecks).every(v => v);
     const noErrors = consoleErrors.length === 0 && networkErrors.length === 0;
@@ -183,8 +322,6 @@ async function checkUIReal(url) {
     if (!responsive) issues.push('Not responsive');
     if (consoleErrors.length > 0) issues.push(`${consoleErrors.length} console errors`);
     if (networkErrors.length > 0) issues.push(`${networkErrors.length} network errors`);
-    
-    console.log(`[Browser] Check complete: ${passed ? 'PASS' : 'FAIL'}`);
     
     return {
       test: 'UI Check (Browser)',
@@ -199,74 +336,50 @@ async function checkUIReal(url) {
         statusCode,
         accessibility: accessibilityChecks,
         responsive,
-        consoleErrors: consoleErrors.slice(0, 5), // Limit to 5
+        consoleErrors: consoleErrors.slice(0, 5),
         networkErrors: networkErrors.slice(0, 5),
-        noErrors
+        noErrors,
+        method: 'Puppeteer'
       }
     };
   } catch (error) {
-    console.error('[Browser] UI check failed:', error.message);
-    
-    // Provide more helpful error message
-    let message = `Browser check failed: ${error.message}`;
-    let helpText = '';
-    
-    if (error.message.includes('socket hang up') || error.message.includes('ECONNREFUSED') || error.message.includes('net::ERR')) {
-      helpText = ' (URL is not reachable - ensure it\'s a live web application, not just a GitHub repo)';
-    } else if (error.message.includes('timeout') || error.message.includes('Navigation timeout')) {
-      helpText = ' (page took too long to load)';
-    }
+    console.error('[Browser] Puppeteer check failed:', error.message);
     
     return {
       test: 'UI Check (Browser)',
       passed: false,
       duration: Date.now() - startTime,
-      message: message + helpText,
+      message: `Browser check failed: ${error.message}`,
       severity: 'high',
       details: {
         error: error.message,
         urlTested: url,
-        browserCheck: 'Connection failed'
+        method: 'Puppeteer'
       }
     };
   } finally {
     if (browser) {
-      try {
-        await browser.close();
-      } catch (closeError) {
-        // Ignore close errors
-      }
+      await browser.close().catch(() => {});
     }
   }
 }
 
 /**
- * Stub UI check (when Puppeteer not available)
+ * Stub UI check (when nothing else is available)
  */
-async function checkUIStub(url) {
-  console.log(`[Browser] Using stub UI check (no Puppeteer)`);
-  
-  const startTime = Date.now();
+async function checkUIStub(url, startTime) {
+  console.log(`[Browser] Using stub UI check`);
   
   try {
-    // Use fetch to at least check if URL is reachable
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; ChaosEngineer/1.0)'
+        'User-Agent': 'Mozilla/5.0 (compatible; SiteReliabilityMonitor/1.0)'
       }
     }).catch(() => null);
     
     const accessible = response && response.ok;
-    
-    // Simulate random results for demo
-    const checks = {
-      accessible: accessible || Math.random() > 0.2,
-      responsive: Math.random() > 0.1,
-      noErrors: Math.random() > 0.15
-    };
-    
-    const passed = checks.accessible && checks.responsive && checks.noErrors;
+    const passed = accessible && Math.random() > 0.2;
     const duration = Date.now() - startTime;
     
     return {
@@ -274,14 +387,14 @@ async function checkUIStub(url) {
       passed,
       duration,
       message: passed
-        ? 'UI check passed (stub mode)'
-        : `UI issues detected (stub): ${Object.entries(checks)
-            .filter(([_, v]) => !v)
-            .map(([k]) => k)
-            .join(', ')}`,
+        ? 'UI check passed (stub mode - install Browser Use or Puppeteer for real checks)'
+        : `UI issues detected (stub mode)`,
       severity: passed ? 'low' : 'medium',
-      details: checks,
-      note: 'Install Puppeteer for real UI checks: npm install puppeteer'
+      details: {
+        accessible,
+        method: 'Stub',
+        note: 'Install Browser Use service for AI-powered checks'
+      }
     };
   } catch (error) {
     return {
@@ -289,8 +402,10 @@ async function checkUIStub(url) {
       passed: false,
       duration: Date.now() - startTime,
       message: `Error: ${error.message}`,
-      severity: 'high'
+      severity: 'high',
+      details: {
+        method: 'Stub'
+      }
     };
   }
 }
-
