@@ -66,16 +66,22 @@ cd backend
 cp .env.example .env
 ```
 
-Edit `.env` with your configuration:
+Edit `.env` with your configuration (optional):
 
 ```env
 PORT=3001
-DAYTONA_API_KEY=your_daytona_api_key_here
-DAYTONA_API_URL=https://api.daytona.io
 NODE_ENV=development
+
+# Optional: Add AI analysis
+ANTHROPIC_API_KEY=your_anthropic_key
+# OR
+OPENAI_API_KEY=your_openai_key
+
+# Optional: Add error tracking
+SENTRY_DSN=your_sentry_dsn
 ```
 
-> **Note**: For the MVP, Daytona integration is stubbed. The app will work without a real API key.
+> **Note**: All API keys are optional. The system works with intelligent fallbacks.
 
 ### 3. Run the Application
 

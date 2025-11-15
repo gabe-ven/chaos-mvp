@@ -17,12 +17,17 @@ export async function initSentry() {
   }
   
   try {
-    console.log('[Sentry] Initializing with DSN:', dsn.substring(0, 20) + '...');
-    
     // Try to import real Sentry package
     try {
       const SentryModule = await import('@sentry/node');
       Sentry = SentryModule;
+      
+      // Validate DSN format before initializing
+      if (!dsn.startsWith('https://') && !dsn.startsWith('http://')) {
+        console.log('[Sentry] ⚠️  Invalid DSN format - error tracking disabled');
+        sentryInitialized = false;
+        return;
+      }
       
       Sentry.init({
         dsn,
@@ -32,17 +37,22 @@ export async function initSentry() {
         integrations: [
           new Sentry.Integrations.Http({ tracing: true }),
         ],
+        // Suppress DSN validation errors
+        beforeSend(event, hint) {
+          return event;
+        }
       });
       
       sentryInitialized = true;
-      console.log('[Sentry] ✓ Initialized successfully with real Sentry SDK');
+      console.log('[Sentry] ✓ Initialized successfully');
     } catch (importError) {
-      // Fallback if @sentry/node is not installed
-      console.log('[Sentry] ⚠️  @sentry/node not installed, using fallback (run: npm install @sentry/node)');
+      // Fallback if @sentry/node is not installed or initialization fails
+      console.log('[Sentry] ⚠️  Error tracking disabled (Sentry not available)');
       sentryInitialized = false;
     }
   } catch (error) {
-    console.error('[Sentry] Failed to initialize:', error.message);
+    console.log('[Sentry] ⚠️  Error tracking disabled');
+    sentryInitialized = false;
   }
 }
 

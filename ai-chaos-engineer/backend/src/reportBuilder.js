@@ -13,7 +13,7 @@ export function buildReport(testResults, aiAnalysis = null) {
     };
   }
 
-  const { tests, workspaceUrl, totalDuration } = testResults;
+  const { tests, url, totalDuration } = testResults;
   
   // Calculate score based on passed tests
   const totalTests = tests.length;
@@ -66,7 +66,7 @@ export function buildReport(testResults, aiAnalysis = null) {
     summary,
     issues,
     raw: {
-      workspaceUrl,
+      url,
       totalDuration,
       tests,
       timestamp: new Date().toISOString()

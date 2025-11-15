@@ -36,15 +36,43 @@ async function checkUIReal(url) {
   try {
     console.log(`[Browser] Launching browser for ${url}...`);
     
+    // Launch browser - set headless:false to see live browser window!
+    const isLiveMode = process.env.BROWSER_LIVE === 'true';
+    
     browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      headless: isLiveMode ? false : 'new', // Show browser if BROWSER_LIVE=true
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-web-security',
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--ignore-certificate-errors',
+        '--disable-gpu'
+      ],
+      ...(isLiveMode && {
+        slowMo: 100, // Slow down actions so you can see them
+        devtools: false
+      })
     });
+    
+    if (isLiveMode) {
+      console.log('[Browser] 🎥 LIVE MODE: Browser window visible!');
+    }
     
     const page = await browser.newPage();
     
+    // Set realistic user agent to avoid bot detection
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    
     // Set viewport
     await page.setViewport({ width: 1920, height: 1080 });
+    
+    // Set extra HTTP headers
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    });
     
     // Collect console errors
     const consoleErrors = [];
@@ -60,12 +88,58 @@ async function checkUIReal(url) {
       networkErrors.push(`${request.url()} - ${request.failure().errorText}`);
     });
     
-    // Navigate to URL
+    // Navigate to URL with better error handling
     console.log(`[Browser] Navigating to ${url}...`);
-    const response = await page.goto(url, {
-      waitUntil: 'networkidle2',
-      timeout: 30000
-    });
+    
+    let response;
+    try {
+      response = await page.goto(url, {
+        waitUntil: 'load', // Wait for load event
+        timeout: 30000 // 30 second timeout
+      });
+      
+      console.log(`[Browser] Page loaded with status: ${response.status()}`);
+    } catch (navError) {
+      console.error(`[Browser] Navigation error: ${navError.message}`);
+      
+      // Try to get page content even if navigation failed
+      const pageContent = await page.content().catch(() => '<html></html>');
+      const hasContent = pageContent.length > 100;
+      
+      await browser.close();
+      const duration = Date.now() - startTime;
+      
+      // If page loaded some content, it's partially working
+      if (hasContent) {
+        return {
+          test: 'UI Check (Browser)',
+          passed: false,
+          duration,
+          message: `Page loaded with errors: ${navError.message} (site may have bot protection or strict security)`,
+          severity: 'medium',
+          details: {
+            error: navError.message,
+            urlTested: url,
+            browserCheck: 'Partial load',
+            contentLength: pageContent.length
+          }
+        };
+      }
+      
+      return {
+        test: 'UI Check (Browser)',
+        passed: false,
+        duration,
+        message: `Browser navigation failed: ${navError.message} (site may block automated browsers)`,
+        severity: 'high',
+        details: {
+          error: navError.message,
+          urlTested: url,
+          browserCheck: 'Failed to connect',
+          suggestion: 'Site may have bot protection or firewall rules'
+        }
+      };
+    }
     
     // Check if page loaded
     const statusCode = response.status();
@@ -133,16 +207,35 @@ async function checkUIReal(url) {
   } catch (error) {
     console.error('[Browser] UI check failed:', error.message);
     
+    // Provide more helpful error message
+    let message = `Browser check failed: ${error.message}`;
+    let helpText = '';
+    
+    if (error.message.includes('socket hang up') || error.message.includes('ECONNREFUSED') || error.message.includes('net::ERR')) {
+      helpText = ' (URL is not reachable - ensure it\'s a live web application, not just a GitHub repo)';
+    } else if (error.message.includes('timeout') || error.message.includes('Navigation timeout')) {
+      helpText = ' (page took too long to load)';
+    }
+    
     return {
       test: 'UI Check (Browser)',
       passed: false,
       duration: Date.now() - startTime,
-      message: `Browser check failed: ${error.message}`,
-      severity: 'high'
+      message: message + helpText,
+      severity: 'high',
+      details: {
+        error: error.message,
+        urlTested: url,
+        browserCheck: 'Connection failed'
+      }
     };
   } finally {
     if (browser) {
-      await browser.close();
+      try {
+        await browser.close();
+      } catch (closeError) {
+        // Ignore close errors
+      }
     }
   }
 }
