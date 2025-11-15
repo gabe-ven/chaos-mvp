@@ -57,7 +57,7 @@ function App() {
             {/* Hero */}
             <div className="text-center space-y-4 max-w-2xl mx-auto">
               <h1 className="text-5xl font-semibold tracking-tight text-white">
-                90-second health check
+                90-Second Health Check
               </h1>
               <p className="text-lg text-neutral-400">
                 Real-time performance and reliability testing for any website
