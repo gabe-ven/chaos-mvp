@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { runChaosTest } from '../lib/api';
 
 export default function RunForm({ onReportReceived, loading, setLoading, liveEvents = [] }) {
@@ -61,15 +62,16 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
     }
 
     const trimmedUrl = url.trim();
-    const isValidUrl = /^https?:\/\/.+/.test(trimmedUrl);
+    const valid = /^https?:\/\/.+/.test(trimmedUrl);
     
-    if (!isValidUrl) {
+    if (!valid) {
       setError('Please enter a valid URL (e.g., https://example.com)');
       return;
     }
 
     setError(null);
     setLoading(true);
+    setElapsedTime(0);
 
     try {
       const report = await runChaosTest(url);
@@ -90,31 +92,57 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
     }
   };
 
+  // Count completed tests
+  const testNames = [
+    'Response Time',
+    'Concurrent Load',
+    'UI Health Check',
+    'Performance Consistency',
+    'Heavy Load Stress',
+    'Rate Limiting',
+    'Error Handling',
+    'Endpoint Resilience'
+  ];
+
+  const completedTests = testNames.filter(testName => {
+    const events = liveEvents.filter(e => e.testName === testName);
+    const event = events.length > 0 ? events[events.length - 1] : null;
+    return event && (event.status === 'passed' || event.status === 'failed');
+  }).length;
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-6">
+    <div className="w-full max-w-3xl mx-auto space-y-4 sm:space-y-6">
       {/* Input Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="relative">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300"></div>
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity duration-300"></div>
           <input
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Enter website URL"
-            className="w-full px-6 py-4 bg-neutral-900 border border-neutral-800 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-700 transition-colors text-base"
+            className="relative w-full px-4 sm:px-6 py-3 sm:py-4 bg-neutral-900/80 backdrop-blur-sm border-2 border-neutral-800 rounded-xl text-white placeholder-neutral-500 hover:border-neutral-700 focus:outline-none focus:border-blue-500 focus:shadow-[0_0_25px_rgba(59,130,246,0.4)] focus:shadow-blue-500/40 transition-all duration-300 text-sm sm:text-base"
             disabled={loading}
           />
         </div>
 
         {error && (
-          <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs sm:text-sm animate-fade-in">
             {error}
           </div>
         )}
 
               <button
           type="submit"
-          disabled={loading || !url.trim()}
-          className="w-full bg-white hover:bg-neutral-100 text-black font-medium py-4 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
+          disabled={loading || !isValidUrl(url)}
+          className="relative w-full bg-gradient-to-r from-white to-neutral-100 hover:from-blue-50 hover:to-white text-black font-semibold py-3.5 sm:py-4 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base shadow-lg shadow-white/10 hover:shadow-xl hover:shadow-white/20 disabled:hover:shadow-lg disabled:hover:shadow-white/10 transform hover:scale-[1.02] disabled:hover:scale-100"
         >
           {loading ? 'Running...' : 'Start Test'}
               </button>
