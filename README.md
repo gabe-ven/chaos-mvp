@@ -68,19 +68,26 @@ chaos-mvp/
 └── README.md                   # This file
 ```
 
-## 🔧 Optional: Add API Keys
+## 🔧 Configuration Options
 
+### **Option 1: Basic Setup (No API Keys)**
+Works immediately with intelligent fallbacks!
+
+### **Option 2: AI Analysis Only**
 Create `ai-chaos-engineer/backend/.env`:
-
 ```env
-# AI Analysis (optional - works with fallback)
-OPENAI_API_KEY=sk-your-key-here
-# OR
 ANTHROPIC_API_KEY=sk-ant-your-key-here
-
-# Error Tracking (optional)
-SENTRY_DSN=https://...@sentry.io/...
+# OR
+OPENAI_API_KEY=sk-your-key-here
 ```
+
+### **Option 3: Full Production Setup**
+For real Daytona, Sentry, and browser automation:
+```bash
+cd ai-chaos-engineer
+./setup-real-integrations.sh
+```
+Then add all API keys to `.env`. See **[REAL_INTEGRATIONS_SUMMARY.md](./REAL_INTEGRATIONS_SUMMARY.md)**
 
 ## 🧪 Run Tests
 

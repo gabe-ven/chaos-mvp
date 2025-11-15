@@ -14,8 +14,8 @@ import {
 
 dotenv.config();
 
-// Initialize Sentry
-initSentry();
+// Initialize Sentry (async)
+await initSentry();
 
 const app = express();
 const PORT = process.env.PORT || 3001;

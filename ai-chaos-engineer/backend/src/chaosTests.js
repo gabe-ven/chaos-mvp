@@ -1,4 +1,5 @@
 import { spinUpWorkspace } from './daytonaClient.js';
+import { checkUI as checkUIBrowser } from './browserClient.js';
 import { sleep } from './utils/timers.js';
 
 /**
@@ -75,47 +76,14 @@ export async function loadSpike(url) {
 }
 
 /**
- * Performs a simple UI check
+ * Performs UI check using browser automation
+ * Falls back to simple check if browser automation not available
  */
 export async function uiCheck(url) {
   console.log(`[UI Check] Testing ${url}...`);
-  const startTime = Date.now();
   
-  try {
-    // Simulate UI validation checks
-    await sleep(Math.random() * 200 + 100);
-    
-    const checks = {
-      accessible: Math.random() > 0.2,
-      responsive: Math.random() > 0.1,
-      noErrors: Math.random() > 0.15
-    };
-    
-    const passed = checks.accessible && checks.responsive && checks.noErrors;
-    const duration = Date.now() - startTime;
-    
-    return {
-      test: 'UI Check',
-      passed,
-      duration,
-      message: passed 
-        ? 'UI is accessible, responsive, and error-free' 
-        : `UI issues detected: ${Object.entries(checks)
-            .filter(([_, v]) => !v)
-            .map(([k]) => k)
-            .join(', ')}`,
-      severity: passed ? 'low' : 'medium',
-      details: checks
-    };
-  } catch (error) {
-    return {
-      test: 'UI Check',
-      passed: false,
-      duration: Date.now() - startTime,
-      message: `Error: ${error.message}`,
-      severity: 'high'
-    };
-  }
+  // Use browser automation from browserClient
+  return await checkUIBrowser(url);
 }
 
 /**
