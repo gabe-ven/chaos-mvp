@@ -598,14 +598,14 @@ export async function runChaosTests(url) {
   // Run tests sequentially so we can notify progress for each one
   const tests = [];
   const testFunctions = [
-    { name: 'Latency Injection', fn: injectLatency },
-    { name: 'Load Spike', fn: loadSpike },
-    { name: 'UI Check (Browser)', fn: uiCheck },
-    { name: 'Memory Leak Test', fn: memoryLeakTest },
-    { name: 'CPU Spike Test', fn: cpuSpikeTest },
-    { name: 'Rate Limit Test', fn: rateLimitTest },
-    { name: 'Error Recovery Test', fn: errorRecoveryTest },
-    { name: 'Cascading Failure Test', fn: cascadingFailureTest }
+    { name: 'Response Time', fn: injectLatency },
+    { name: 'Concurrent Load', fn: loadSpike },
+    { name: 'UI Health Check', fn: uiCheck },
+    { name: 'Performance Consistency', fn: memoryLeakTest },
+    { name: 'Heavy Load Stress', fn: cpuSpikeTest },
+    { name: 'Rate Limiting', fn: rateLimitTest },
+    { name: 'Error Handling', fn: errorRecoveryTest },
+    { name: 'Endpoint Resilience', fn: cascadingFailureTest }
   ];
   
   for (const { name, fn } of testFunctions) {

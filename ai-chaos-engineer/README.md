@@ -1,239 +1,113 @@
-# 🔥 AI Chaos Engineer
+# Site Reliability Monitor
 
-A 6-hour MVP for automated chaos engineering testing. Test your application's resilience with latency injection, load spikes, and UI checks, all powered by Daytona workspaces.
+Real-time external health and performance testing for any website. Get a comprehensive stability report in 90 seconds.
 
-## 🚀 Features
+## What It Does
 
-- **Latency Injection**: Simulates network delays to test timeout handling
-- **Load Spike Testing**: Tests performance under concurrent requests
-- **UI Validation**: Checks accessibility, responsiveness, and error states
-- **Stability Score**: Get a 0-100 score based on your app's resilience
-- **Detailed Reports**: JSON reports with issues, severity levels, and recommendations
+Runs 8 real-time tests on any website:
+- Response Time
+- Concurrent Load  
+- UI Health Check
+- Performance Consistency
+- Heavy Load Stress
+- Rate Limiting
+- Error Handling
+- Endpoint Resilience
 
-## 📁 Project Structure
+All tests make actual HTTP requests to your target site. Results are analyzed by AI for actionable recommendations.
 
-```
-ai-chaos-engineer/
-├── backend/          # Express API server
-│   ├── src/
-│   │   ├── index.js           # Main server
-│   │   ├── chaosTests.js      # Chaos test implementations
-│   │   ├── daytonaClient.js   # Daytona workspace manager
-│   │   ├── reportBuilder.js   # Report generation
-│   │   └── utils/
-│   │       └── timers.js      # Timer utilities
-│   ├── tests/
-│   │   └── chaosTests.test.js # Jest tests
-│   └── package.json
-├── frontend/         # React + Vite + Tailwind UI
-│   ├── src/
-│   │   ├── main.jsx
-│   │   ├── App.jsx
-│   │   ├── components/
-│   │   │   ├── RunForm.jsx    # Test input form
-│   │   │   └── ReportView.jsx # Results display
-│   │   └── lib/
-│   │       └── api.js         # API client
-│   └── package.json
-└── README.md         # This file
-```
-
-## 🏃 Quick Start
+## Quick Start
 
 ### Prerequisites
+- Node.js 18+
+- npm
 
-- Node.js 18+ and npm
-- Git
+### Setup
 
-### 1. Install Dependencies
-
+1. **Clone and install:**
 ```bash
-# Install backend dependencies
-cd backend
-npm install
-
-# Install frontend dependencies
-cd ../frontend
+cd ai-chaos-engineer
 npm install
 ```
 
-### 2. Configure Backend
-
-Create a `.env` file in the `backend/` directory:
-
+2. **Configure environment:**
 ```bash
+# Backend
 cd backend
+cp .env.example .env
+# Add your API keys:
+# - ANTHROPIC_API_KEY or OPENAI_API_KEY (for AI analysis)
+# - SENTRY_DSN (optional, for error tracking)
+
+# Frontend
+cd ../frontend
 cp .env.example .env
 ```
 
-Edit `.env` with your configuration (optional):
-
-```env
-PORT=3001
-NODE_ENV=development
-
-# Optional: Add AI analysis
-ANTHROPIC_API_KEY=your_anthropic_key
-# OR
-OPENAI_API_KEY=your_openai_key
-
-# Optional: Add error tracking
-SENTRY_DSN=your_sentry_dsn
-```
-
-> **Note**: All API keys are optional. The system works with intelligent fallbacks.
-
-### 3. Run the Application
-
-**Terminal 1 - Start Backend:**
-
+3. **Run:**
 ```bash
+# Terminal 1 - Backend
 cd backend
 npm run dev
-```
 
-Backend will run on `http://localhost:3001`
-
-**Terminal 2 - Start Frontend:**
-
-```bash
+# Terminal 2 - Frontend  
 cd frontend
 npm run dev
 ```
 
-Frontend will run on `http://localhost:5173`
+4. **Open:** http://localhost:5173
 
-### 4. Use the Application
+## Environment Variables
 
-1. Open your browser to `http://localhost:5173`
-2. Enter a GitHub repository URL or web URL
-3. Click **"Run Chaos Test"**
-4. View your stability score and detailed report
+### Backend (.env)
+```env
+# Required for AI recommendations (choose one)
+ANTHROPIC_API_KEY=your-key-here
+# OR
+OPENAI_API_KEY=your-key-here
 
-## 🧪 Running Tests
-
-```bash
-cd backend
-npm test
+# Optional
+SENTRY_DSN=your-sentry-dsn
+PORT=3001
 ```
 
-## 📊 API Endpoints
-
-### `POST /run`
-
-Runs chaos tests on the provided URL.
-
-**Request:**
-```json
-{
-  "url": "https://github.com/username/repo"
-}
+### Frontend (.env)
+```env
+VITE_API_URL=http://localhost:3001
+VITE_WS_URL=ws://localhost:3001/ws
 ```
 
-**Response:**
-```json
-{
-  "score": 85,
-  "status": "Excellent",
-  "summary": "3/3 tests passed. Stability score: 85/100",
-  "issues": [],
-  "raw": {
-    "workspaceUrl": "https://workspace-xyz.daytona.dev",
-    "totalDuration": 1234,
-    "tests": [
-      {
-        "test": "Latency Injection",
-        "passed": true,
-        "duration": 456,
-        "message": "Response time: 456ms (acceptable)",
-        "severity": "low"
-      }
-    ],
-    "timestamp": "2025-11-15T12:00:00.000Z"
-  }
-}
-```
+## How It Works
 
-### `GET /health`
+1. Enter any website URL
+2. Watch live test execution in real-time
+3. Get instant stability score (0-100)
+4. Review AI-powered recommendations
+5. Export detailed JSON report
 
-Health check endpoint.
+## Tech Stack
 
-**Response:**
-```json
-{
-  "status": "ok",
-  "message": "AI Chaos Engineer API is running"
-}
-```
+- **Backend:** Node.js, Express, Puppeteer
+- **Frontend:** React, Tailwind CSS, Vite
+- **Real-Time:** WebSockets
+- **AI:** Anthropic Claude / OpenAI GPT
 
-## 🎨 Tech Stack
+## What It Actually Tests
 
-### Backend
-- **Express** - Web framework
-- **Node.js** - Runtime
-- **Jest** - Testing framework
-- **dotenv** - Environment variables
+This is an **external monitoring tool** that tests websites from the outside:
+- ✅ Availability and response times
+- ✅ Basic load handling
+- ✅ UI health via browser automation
+- ✅ Error page responses
+- ✅ Rate limiting detection
 
-### Frontend
-- **React 18** - UI framework
-- **Vite** - Build tool
-- **Tailwind CSS** - Styling
-- **PostCSS** - CSS processing
+**Not included:**
+- ❌ Server-side metrics (CPU, memory)
+- ❌ Infrastructure-level chaos (process killing, network faults)
+- ❌ Large-scale load testing
 
-## 🔧 Development
+Perfect for small-medium websites, development testing, and basic monitoring.
 
-### Backend Structure
-
-- `src/index.js` - Express server setup and routes
-- `src/chaosTests.js` - Core chaos testing logic
-- `src/daytonaClient.js` - Daytona workspace management (stubbed for MVP)
-- `src/reportBuilder.js` - Report generation and scoring
-- `src/utils/timers.js` - Utility functions for timing
-
-### Frontend Structure
-
-- `src/App.jsx` - Main application layout
-- `src/components/RunForm.jsx` - Input form for URLs
-- `src/components/ReportView.jsx` - Test results display
-- `src/lib/api.js` - API communication layer
-
-## 🚧 Current Limitations (MVP)
-
-- Daytona workspace integration is stubbed (simulated)
-- Tests use simulated delays rather than real network calls
-- No authentication or user management
-- No test result persistence
-- Limited error handling
-
-## 🎯 Future Enhancements
-
-- [ ] Real Daytona API integration
-- [ ] Database for test history
-- [ ] User authentication
-- [ ] Custom test configuration
-- [ ] Scheduled recurring tests
-- [ ] Slack/email notifications
-- [ ] More chaos test types (CPU spike, memory leak, etc.)
-- [ ] Multi-region testing
-- [ ] CI/CD integration
-
-## 📝 License
+## License
 
 MIT
-
-## 🤝 Contributing
-
-This is a 6-hour MVP. Contributions welcome!
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-Built with ❤️ in 6 hours
-
-
-
