@@ -36,8 +36,8 @@ export default function ReportViewer({ report, loading, onBack }) {
       )}
 
       {/* Score Card */}
-      <div className="rounded-2xl border border-neutral-800 bg-gradient-to-br from-neutral-900 via-neutral-950 to-black p-8 text-center shadow-xl shadow-black/40">
-        <div className="text-xs font-medium tracking-widest text-neutral-500 uppercase mb-4">Stability score</div>
+      <div className="rounded-2xl border border-neutral-800 bg-neutral-950/90 p-8 text-center">
+        <div className="text-xs font-medium tracking-widest text-neutral-500 uppercase mb-3">Stability score</div>
         <div className="flex items-baseline justify-center gap-2 mb-2">
           <span className={`text-7xl font-semibold ${getScoreColor(report.score)}`}>
             {report.score}
@@ -50,29 +50,29 @@ export default function ReportViewer({ report, loading, onBack }) {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/60">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/80">
           <div className="text-2xl font-semibold text-white mb-1">
             {report.raw?.tests?.filter(t => t.passed).length || 0}
           </div>
           <div className="text-xs text-neutral-500">Tests Passed</div>
         </div>
         
-        <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/60">
+        <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/80">
           <div className="text-2xl font-semibold text-white mb-1">
             {report.issues?.length || 0}
           </div>
           <div className="text-xs text-neutral-500">Issues Found</div>
         </div>
         
-        <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/60">
+        <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/80">
           <div className="text-2xl font-semibold text-white mb-1">
             {report.raw?.totalDuration ? Math.round(report.raw.totalDuration / 1000) : 0}s
           </div>
           <div className="text-xs text-neutral-500">Duration</div>
         </div>
         
-        <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/60">
+        <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/80">
           <div className="text-2xl font-semibold text-white mb-1">
             {report.raw?.tests?.length || 0}
           </div>
@@ -82,7 +82,7 @@ export default function ReportViewer({ report, loading, onBack }) {
 
       {/* Summary */}
       <div className="rounded-2xl border border-neutral-800 bg-neutral-950/80 p-6">
-        <h3 className="text-sm font-medium text-neutral-300 mb-3">Summary</h3>
+        <h3 className="text-sm font-medium text-neutral-200 mb-3">Summary</h3>
         <p className="text-neutral-300 text-sm leading-relaxed">{report.summary}</p>
       </div>
 

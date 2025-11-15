@@ -41,18 +41,17 @@ function App() {
 
   return (
     <div className={`min-h-screen ${loading || report ? 'md:min-h-screen' : 'md:h-screen'} bg-black text-white relative ${loading || report ? 'md:overflow-y-auto custom-scrollbar' : 'md:overflow-hidden'} overflow-y-auto flex flex-col`}>
-      {/* Animated background gradient */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-950/30 via-black to-purple-950/30"></div>
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-pink-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.75s' }}></div>
-      </div>
+      {/* Background */}
+      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-neutral-950 via-black to-neutral-950" />
 
-      {/* Minimal Header */}
-      <header className="border-b border-neutral-900 bg-black/80 backdrop-blur-xl sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4">
-          <h1 className="text-xxl font-semibold tracking-tight text-white">Strux</h1>
+      {/* Header */}
+      <header className="border-b border-neutral-900 bg-black/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+              Strux
+            </h1>
+          </div>
         </div>
       </header>
 
@@ -62,19 +61,16 @@ function App() {
           <div className={`w-full space-y-6 sm:space-y-8 ${loading ? 'md:py-8' : 'md:py-4 sm:py-8'}`}>
             {/* Hero */}
             <div className="text-center space-y-3 sm:space-y-4 max-w-2xl mx-auto">
-              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs sm:text-sm font-medium animate-fade-in">
-                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                AI-Powered Testing
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-neutral-800 text-neutral-400 text-xs sm:text-sm font-medium">
+                External reliability checks for your site
               </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent animate-fade-in px-2">
-                90-Second Health Check
-              </h1>
-              <p className="text-base sm:text-lg text-neutral-400 leading-relaxed animate-fade-in px-2" style={{ animationDelay: '0.1s' }}>
-                Real-time performance and reliability testing for any website
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-white px-2">
+                90‑second health check
+              </h2>
+              <p className="text-base sm:text-lg text-neutral-300 leading-relaxed px-2">
+                Point Strux at any URL and get a concise view of latency, load, error handling, and endpoint resilience.
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-neutral-500 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-neutral-500">
                 <div className="flex items-center gap-2">
                   <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -85,7 +81,7 @@ function App() {
                   <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span>Instant results</span>
+                  <span>Clean, shareable report</span>
                 </div>
               </div>
             </div>
@@ -100,26 +96,21 @@ function App() {
 
             {/* Features - Only show when not loading */}
             {!loading && (
-              <div className="grid grid-cols-3 gap-8 text-center pt-8">
-                <div>
-                  <div className="text-3xl font-semibold text-white mb-2">7</div>
-                  <div className="text-sm text-neutral-500">Health checks</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-4 sm:pt-6">
+                <div className="p-4 rounded-xl bg-neutral-900/60 border border-neutral-800">
+                  <div className="text-xs text-neutral-500 mb-1 uppercase tracking-wide">Coverage</div>
+                  <div className="text-2xl font-semibold text-white mb-1">7 checks</div>
+                  <div className="text-xs text-neutral-500">Latency, load, errors, endpoints</div>
                 </div>
-                <div className="group relative p-4 sm:p-4 rounded-xl bg-neutral-900/40 border border-neutral-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-1">
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-purple-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="relative">
-                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-purple-500/10 mb-3 group-hover:bg-purple-500/20 transition-colors group-hover:scale-110">
-                      <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="text-3xl font-bold text-white mb-1 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">90s</div>
-                    <div className="text-xs text-neutral-400">Complete analysis</div>
-                  </div>
+                <div className="p-4 rounded-xl bg-neutral-900/60 border border-neutral-800">
+                  <div className="text-xs text-neutral-500 mb-1 uppercase tracking-wide">Turnaround</div>
+                  <div className="text-2xl font-semibold text-white mb-1">~90s</div>
+                  <div className="text-xs text-neutral-500">From URL to report</div>
                 </div>
-                <div>
-                  <div className="text-3xl font-semibold text-white mb-2">Live</div>
-                  <div className="text-sm text-neutral-500">Streaming updates</div>
+                <div className="p-4 rounded-xl bg-neutral-900/60 border border-neutral-800">
+                  <div className="text-xs text-neutral-500 mb-1 uppercase tracking-wide">Experience</div>
+                  <div className="text-2xl font-semibold text-white mb-1">Live</div>
+                  <div className="text-xs text-neutral-500">Streaming test progress</div>
                 </div>
               </div>
             )}

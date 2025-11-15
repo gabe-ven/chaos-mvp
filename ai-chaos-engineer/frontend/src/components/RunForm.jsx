@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useState, useEffect, useRef } from 'react';
 import { runChaosTest } from '../lib/api';
 
 export default function RunForm({ onReportReceived, loading, setLoading, liveEvents = [] }) {
@@ -71,7 +70,6 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
 
     setError(null);
     setLoading(true);
-    setElapsedTime(0);
 
     try {
       const report = await runChaosTest(url);
@@ -110,74 +108,61 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
     return event && (event.status === 'passed' || event.status === 'failed');
   }).length;
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  // Simple URL validator for button disabled state
+  const isValidUrl = (value) => /^https?:\/\/.+/.test(value.trim());
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-4 sm:space-y-6">
       {/* Input Form */}
       <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300"></div>
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity duration-300"></div>
+        <div className="relative">
           <input
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Enter website URL"
-            className="relative w-full px-4 sm:px-6 py-3 sm:py-4 bg-neutral-900/80 backdrop-blur-sm border-2 border-neutral-800 rounded-xl text-white placeholder-neutral-500 hover:border-neutral-700 focus:outline-none focus:border-blue-500 focus:shadow-[0_0_25px_rgba(59,130,246,0.4)] focus:shadow-blue-500/40 transition-all duration-300 text-sm sm:text-base"
+            className="w-full px-4 sm:px-6 py-3 sm:py-3.5 bg-neutral-950/90 border border-neutral-800 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition-colors text-sm sm:text-base"
             disabled={loading}
           />
         </div>
 
         {error && (
-          <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs sm:text-sm animate-fade-in">
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs sm:text-sm">
             {error}
           </div>
         )}
 
-              <button
+        <button
           type="submit"
           disabled={loading || !isValidUrl(url)}
-          className="relative w-full bg-gradient-to-r from-white to-neutral-100 hover:from-blue-50 hover:to-white text-black font-semibold py-3.5 sm:py-4 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base shadow-lg shadow-white/10 hover:shadow-xl hover:shadow-white/20 disabled:hover:shadow-lg disabled:hover:shadow-white/10 transform hover:scale-[1.02] disabled:hover:scale-100"
+          className="w-full bg-white hover:bg-neutral-100 text-black font-semibold py-3.5 sm:py-3.5 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
         >
-          {loading ? 'Running...' : 'Start Test'}
-              </button>
+          {loading ? 'Running...' : 'Start test'}
+        </button>
       </form>
 
       {/* Live Health Checks */}
       {loading && (
         <div className="space-y-4">
           {/* Dashboard Header */}
-          <div className="bg-gradient-to-r from-neutral-900 via-neutral-950 to-neutral-900 border border-neutral-800/80 rounded-2xl p-6 shadow-xl shadow-black/40">
+          <div className="bg-neutral-950/90 border border-neutral-800 rounded-2xl p-5 sm:p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 opacity-20 animate-pulse"></div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                  <div className="w-8 h-8 rounded-full border border-neutral-700 flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white">Running health checks</h3>
+                  <h3 className="text-sm font-medium text-white">Running health checks</h3>
                   <p className="text-xs text-neutral-500">
                     {testsCompleted} of {testDefinitions.length} tests completed
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="px-3 py-1.5 bg-neutral-900/80 border border-neutral-700 rounded-full text-xs text-neutral-400 font-mono">
+                <div className="px-3 py-1 bg-neutral-900/90 border border-neutral-700 rounded-full text-xs text-neutral-400 font-mono">
                   {elapsedSeconds}s
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-full">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                  <span className="text-xs font-semibold text-green-400 uppercase tracking-wider">Live</span>
                 </div>
               </div>
             </div>
