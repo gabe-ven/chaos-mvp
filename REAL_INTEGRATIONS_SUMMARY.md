@@ -62,15 +62,15 @@ NODE_ENV=development
 
 # Claude AI
 ANTHROPIC_API_KEY=sk-ant-your-actual-key
-ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
 
-# Daytona
+# Daytona (URL auto-defaults to https://api.daytona.io)
 DAYTONA_API_KEY=your-daytona-key
-DAYTONA_API_URL=https://api.daytona.io
 
 # Sentry
 SENTRY_DSN=https://your-dsn@sentry.ingest.io/project
 ```
+
+**Simplified!** Daytona URL now defaults automatically - just add your key!
 
 ### **Step 4: Run It!**
 

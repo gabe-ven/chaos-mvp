@@ -43,13 +43,14 @@ ANTHROPIC_API_KEY=sk-ant-xxxxx
 # OR
 # OPENAI_API_KEY=sk-xxxxx
 
-# OPTIONAL: For real workspace provisioning
+# OPTIONAL: For real workspace provisioning (URL auto-defaults!)
 DAYTONA_API_KEY=your_key
-DAYTONA_API_URL=https://api.daytona.io
 
 # OPTIONAL: For error tracking
 SENTRY_DSN=https://xxxxx@sentry.ingest.io/xxxxx
 ```
+
+**Note**: `DAYTONA_API_URL` now defaults to `https://api.daytona.io` - no need to specify!
 
 ### **4. Get Your API Keys**
 

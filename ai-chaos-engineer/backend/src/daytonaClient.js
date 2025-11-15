@@ -1,6 +1,10 @@
 import { sleep } from './utils/timers.js';
 
-const USE_REAL_DAYTONA = process.env.DAYTONA_API_KEY && process.env.DAYTONA_API_URL;
+// Daytona configuration
+const DAYTONA_API_KEY = process.env.DAYTONA_API_KEY;
+const DAYTONA_API_URL = process.env.DAYTONA_API_URL || 'https://api.daytona.io'; // Default URL
+
+const USE_REAL_DAYTONA = !!DAYTONA_API_KEY;
 
 /**
  * Spins up a Daytona workspace for the given URL/repo
@@ -21,12 +25,12 @@ export async function spinUpWorkspace(url) {
  */
 async function spinUpWorkspaceReal(url) {
   try {
-    console.log('[Daytona] Using real Daytona API...');
+    console.log(`[Daytona] Using real Daytona API (${DAYTONA_API_URL})...`);
     
-    const response = await fetch(`${process.env.DAYTONA_API_URL}/workspaces`, {
+    const response = await fetch(`${DAYTONA_API_URL}/workspaces`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.DAYTONA_API_KEY}`,
+        'Authorization': `Bearer ${DAYTONA_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -111,10 +115,10 @@ export async function tearDownWorkspace(workspaceId) {
  */
 async function tearDownWorkspaceReal(workspaceId) {
   try {
-    const response = await fetch(`${process.env.DAYTONA_API_URL}/workspaces/${workspaceId}`, {
+    const response = await fetch(`${DAYTONA_API_URL}/workspaces/${workspaceId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${process.env.DAYTONA_API_KEY}`
+        'Authorization': `Bearer ${DAYTONA_API_KEY}`
       }
     });
 

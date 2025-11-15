@@ -1,0 +1,14 @@
+{
+  "name": "chaos-runner",
+  "version": "1.0.0",
+  "description": "Playwright-based chaos testing automation",
+  "type": "module",
+  "main": "chaosRunner.js",
+  "scripts": {
+    "chaos": "node chaosRunner.js"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}
+
