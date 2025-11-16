@@ -29,7 +29,10 @@ export default function ReportViewer({ report, loading, onBack }) {
         status: report.status,
         timestamp: report.raw?.timestamp || new Date().toISOString(),
         testsPassed: report.raw?.tests?.filter(t => t.passed).length || 0,
-        totalTests: report.raw?.tests?.length || 0
+        totalTests: report.raw?.tests?.length || 0,
+        runId: report.raw?.runId,
+        // Store full report snapshot so history items can be reopened
+        report
       });
     }
   }, [report, loading]);

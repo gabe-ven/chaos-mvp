@@ -25,7 +25,7 @@ export const TEST_CONFIG = {
   TEST_NAMES: [
     'Response Time',
     'Concurrent Load',
-    'UI Health Check',
+    'Security Headers',
     'Performance Consistency',
     'Heavy Load Stress',
     'Rate Limiting',
@@ -39,7 +39,7 @@ export const TEST_CONFIG = {
   TEST_DESCRIPTIONS: {
     'Response Time': 'Measures HTTP response latency and timeout handling',
     'Concurrent Load': 'Tests handling of simultaneous requests under load',
-    'UI Health Check': 'Validates UI accessibility, structure, and error handling',
+    'Security Headers': 'Checks HTTPS usage and common security headers (HSTS, CSP, etc.)',
     'Performance Consistency': 'Detects memory leaks and response time degradation',
     'Heavy Load Stress': 'Stresses server CPU with large concurrent requests',
     'Rate Limiting': 'Tests rate limiting behavior and graceful degradation',

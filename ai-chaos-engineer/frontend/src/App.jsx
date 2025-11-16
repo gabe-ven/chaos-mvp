@@ -126,12 +126,13 @@ function App() {
     // If the test item has full report data, load it
     if (testItem.report) {
       setReport(testItem.report);
-      setShowHistory(false);
     } else {
-      // Otherwise, just show a message (full reports aren't stored to save space)
+      // For now, just log selection (history stores summary only)
       console.log('[App] Test history item selected:', testItem);
-      // Could implement a "re-run test" feature here
     }
+
+    // In all cases, close history and take user back to main view
+    setShowHistory(false);
   };
 
   return (
@@ -178,7 +179,11 @@ function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className={`flex-1 ${loading ? '' : 'md:overflow-hidden'} flex ${loading ? '' : 'md:items-center'} justify-center max-w-5xl mx-auto w-full px-4 sm:px-6 relative z-0 md:py-0 py-8`}>
+      <main
+        className={`flex-1 ${loading ? '' : 'md:overflow-hidden'} flex ${
+          !loading && !showHistory ? 'md:items-center' : ''
+        } justify-center max-w-5xl mx-auto w-full px-4 sm:px-6 relative z-0 md:py-0 py-8`}
+      >
         {/* Test History View */}
         {showHistory && !report && !loading ? (
           <TestHistory
@@ -197,7 +202,7 @@ function App() {
                 External reliability checks for your site
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-white px-2 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                90‑second health check
+                Site reliability check
               </h2>
               <p className="text-base sm:text-lg text-neutral-300 leading-relaxed px-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                 Point Strux at any URL and get a concise view of latency, load, error handling, and endpoint resilience.
@@ -242,7 +247,7 @@ function App() {
                 </div>
                 <div className="group p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 hover:border-neutral-700 transition-colors">
                   <div className="text-xs text-neutral-500 mb-1 uppercase tracking-wide">Turnaround</div>
-                  <div className="text-2xl font-semibold text-white mb-1">~90s</div>
+                  <div className="text-2xl font-semibold text-white mb-1">Fast</div>
                   <div className="text-xs text-neutral-500">From URL to report</div>
                 </div>
                 <div className="group p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 hover:border-neutral-700 transition-colors">

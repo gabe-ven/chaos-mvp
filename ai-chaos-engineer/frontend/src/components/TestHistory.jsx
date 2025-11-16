@@ -72,7 +72,7 @@ export default function TestHistory({ onSelectTest, onClose }) {
         {onClose && (
           <button
             onClick={onClose}
-            className="flex items-center gap-2 text-sm text-neutral-500 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-sm text-neutral-500 hover:text-white transition-colors mb-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -96,35 +96,41 @@ export default function TestHistory({ onSelectTest, onClose }) {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-white">Test History</h2>
-          <p className="text-sm text-neutral-500 mt-1">
-            {history.length} test{history.length !== 1 ? 's' : ''} completed
-          </p>
+    <div className="w-full max-w-5xl mx-auto space-y-4 pt-2 sm:pt-6">
+      {/* Top bar: Back + Actions */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center">
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="inline-flex items-center gap-2 text-xs sm:text-sm text-neutral-500 hover:text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="hidden sm:inline">Back</span>
+            </button>
+          )}
         </div>
+
         <div className="flex items-center gap-2">
           {history.length > 0 && (
             <button
               onClick={() => setShowClearConfirm(true)}
-              className="px-3 py-1.5 text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-lg transition-colors border border-neutral-700"
+              className="px-3 py-1.5 text-xs bg-neutral-900 hover:bg-neutral-800 text-neutral-300 rounded-lg transition-colors border border-neutral-800"
             >
-              Clear History
-            </button>
-          )}
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="flex items-center gap-2 text-sm text-neutral-500 hover:text-white transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              Clear history
             </button>
           )}
         </div>
+      </div>
+
+      {/* Centered Title */}
+      <div className="text-center mb-2">
+        <h2 className="text-lg sm:text-xl font-semibold text-white">Test history</h2>
+        <p className="text-xs sm:text-sm text-neutral-500 mt-1">
+          {history.length} run{history.length !== 1 ? 's' : ''} captured
+        </p>
       </div>
 
       {/* Clear Confirmation Dialog */}
@@ -153,8 +159,8 @@ export default function TestHistory({ onSelectTest, onClose }) {
         </div>
       )}
 
-      {/* History List */}
-      <div className="space-y-3">
+      {/* History List - Scrolls within the page, header stays put */}
+      <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
         {history.map((item) => (
           <div
             key={item.id}

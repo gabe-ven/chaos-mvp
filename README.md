@@ -123,7 +123,7 @@ To investigate further in Sentry:
 
 # Site Reliability Monitor
 
-Real-time external health and performance testing for any website. Get a comprehensive stability report in 90 seconds with **AI-powered browser automation**.
+Real-time external health and performance testing for any website, with a comprehensive stability report and **AI-powered browser automation**.
 
 ## What It Does
 

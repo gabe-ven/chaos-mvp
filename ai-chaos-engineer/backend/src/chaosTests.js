@@ -183,6 +183,90 @@ export async function uiCheck(url, notifyProgress = null) {
 }
 
 /**
+ * Checks HTTPS usage and common security headers
+ */
+export async function securityHeadersTest(url, notifyProgress = null) {
+  console.log(`[Security Headers Test] Testing ${url}...`);
+  const startTime = Date.now();
+
+  try {
+    const isHttps = url.startsWith('https://');
+
+    if (notifyProgress) {
+      notifyProgress('Security Headers', 'running', {
+        action: 'Checking HTTPS and security headers',
+        metric: isHttps ? 'HTTPS detected, requesting headers...' : 'Non-HTTPS URL, requesting headers...'
+      });
+    }
+
+    const response = await fetch(url, {
+      method: 'HEAD',
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; SiteReliabilityMonitor/1.0)'
+      }
+    });
+
+    const duration = Date.now() - startTime;
+
+    const headers = response.headers || new Headers();
+    const requiredHeaders = [
+      'strict-transport-security',
+      'content-security-policy',
+      'x-frame-options',
+      'x-content-type-options'
+    ];
+
+    const presentHeaders = [];
+    const missingHeaders = [];
+
+    for (const name of requiredHeaders) {
+      const value = headers.get(name);
+      if (value) {
+        presentHeaders.push({ name, value });
+      } else {
+        missingHeaders.push(name);
+      }
+    }
+
+    const presentCount = presentHeaders.length;
+    const passed = isHttps && presentCount >= 2 && response.ok;
+
+    if (notifyProgress) {
+      notifyProgress('Security Headers', 'running', {
+        action: 'Analyzing header configuration',
+        metric: `${presentCount}/${requiredHeaders.length} key headers present`
+      });
+    }
+
+    return {
+      test: 'Security Headers',
+      passed,
+      duration,
+      message: passed
+        ? `Good security posture: HTTPS with ${presentCount}/${requiredHeaders.length} recommended headers`
+        : `Weak security posture: ${presentCount}/${requiredHeaders.length} headers present${!isHttps ? ', URL is not HTTPS' : ''}`,
+      severity: passed ? 'low' : isHttps ? 'medium' : 'high',
+      details: {
+        isHttps,
+        status: response.status,
+        presentHeaders,
+        missingHeaders,
+        requiredHeaders
+      }
+    };
+  } catch (error) {
+    return {
+      test: 'Security Headers',
+      passed: false,
+      duration: Date.now() - startTime,
+      message: `Error checking security headers: ${error.message}`,
+      severity: 'high'
+    };
+  }
+}
+
+/**
  * Tests for memory leaks by making repeated real requests and measuring response degradation
  */
 export async function memoryLeakTest(url, notifyProgress = null) {
@@ -645,6 +729,7 @@ export async function runChaosTests(url, options = {}) {
   const testFunctions = [
     { name: 'Response Time', fn: injectLatency },
     { name: 'Concurrent Load', fn: loadSpike },
+    { name: 'Security Headers', fn: securityHeadersTest },
     { name: 'Performance Consistency', fn: memoryLeakTest },
     { name: 'Heavy Load Stress', fn: cpuSpikeTest },
     { name: 'Rate Limiting', fn: rateLimitTest },

@@ -77,7 +77,7 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
   const TEST_DEFINITIONS = [
     { name: 'Response Time', color: 'yellow', description: 'Measures HTTP response latency' },
     { name: 'Concurrent Load', color: 'blue', description: 'Tests handling of simultaneous requests' },
-    { name: 'UI Health Check', color: 'green', description: 'Validates UI accessibility and structure' },
+    { name: 'Security Headers', color: 'green', description: 'Checks HTTPS usage and security headers' },
     { name: 'Performance Consistency', color: 'purple', description: 'Detects memory leaks and degradation' },
     { name: 'Heavy Load Stress', color: 'orange', description: 'Stresses server CPU with large requests' },
     { name: 'Rate Limiting', color: 'cyan', description: 'Tests rate limiting behavior' },

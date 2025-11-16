@@ -106,15 +106,24 @@ export function getTestHistory(limit = 10) {
  */
 export function addToTestHistory(testResult, maxHistory = 50) {
   const history = getTestHistory(maxHistory * 2); // Get more than needed
-  
+
+  // Use runId (if present) to avoid duplicate entries for the same run
+  const runId = testResult.runId || testResult.raw?.runId;
+  const baseTimestamp = testResult.timestamp || new Date().toISOString();
+
+  let filteredHistory = history;
+  if (runId) {
+    filteredHistory = history.filter(item => item.runId !== runId);
+  }
+
   // Add new result at the beginning
   const newHistory = [
     {
       ...testResult,
-      timestamp: new Date().toISOString(),
-      id: Date.now().toString()
+      timestamp: baseTimestamp,
+      id: runId || Date.now().toString()
     },
-    ...history
+    ...filteredHistory
   ].slice(0, maxHistory); // Keep only the most recent items
 
   return setStorageItem(STORAGE_KEYS.TEST_HISTORY, newHistory);
