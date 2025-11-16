@@ -156,6 +156,32 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
     setError(null);
   };
 
+  /**
+   * Check if input looks like a valid URL format
+   * This is a quick check before full validation
+   */
+  const isValidUrlFormat = (value) => {
+    if (!value || typeof value !== 'string') {
+      return false;
+    }
+    
+    const trimmed = value.trim();
+    
+    // Empty string is invalid
+    if (trimmed.length === 0) {
+      return false;
+    }
+    
+    // Must start with http:// or https://, OR look like a domain (has dot and valid TLD)
+    const hasProtocol = trimmed.startsWith('http://') || trimmed.startsWith('https://');
+    const looksLikeDomain = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}/.test(trimmed);
+    
+    return hasProtocol || looksLikeDomain;
+  };
+
+  // Check if URL is valid for button state
+  const isUrlValid = isValidUrlFormat(url) && validateAndNormalizeUrl(url).isValid;
+
   return (
     <div className="w-full max-w-3xl mx-auto space-y-4 sm:space-y-6">
       {/* Input Form */}
@@ -179,7 +205,7 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
 
         <button
           type="submit"
-          disabled={loading || !validateAndNormalizeUrl(url).isValid}
+          disabled={loading || !isUrlValid}
           className="w-full bg-white hover:bg-neutral-100 text-black font-semibold py-3.5 sm:py-3.5 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
         >
           {loading ? 'Running...' : 'Start test'}
