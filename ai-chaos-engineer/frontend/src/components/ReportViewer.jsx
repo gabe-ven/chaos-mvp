@@ -148,7 +148,7 @@ export default function ReportViewer({ report, loading, onBack }) {
   const failedTests = totalTests - passedTests;
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-6">
+    <div className="w-full max-w-5xl mx-auto space-y-6 sm:space-y-7">
       {/* Header with Back Button and Actions */}
       <div className="flex items-center justify-between">
         {onBack && (
@@ -196,8 +196,12 @@ export default function ReportViewer({ report, loading, onBack }) {
       </div>
 
       {/* Score Card */}
-      <div className={`rounded-2xl border ${getScoreBgColor(report.score)} bg-neutral-950/90 p-8 text-center`}>
-        <div className="text-xs font-medium tracking-widest text-neutral-500 uppercase mb-3">
+      <div
+        className={`rounded-2xl border ${getScoreBgColor(
+          report.score
+        )} bg-gradient-to-b from-neutral-950 via-black to-neutral-950 p-7 sm:p-8 text-center shadow-[0_22px_70px_rgba(0,0,0,0.75)]`}
+      >
+        <div className="text-[11px] sm:text-xs font-medium tracking-[0.18em] text-neutral-500 uppercase mb-3">
           Stability Score
         </div>
         <div className="flex items-baseline justify-center gap-2 mb-2">
@@ -207,12 +211,16 @@ export default function ReportViewer({ report, loading, onBack }) {
           <span className="text-neutral-600 text-xl">/100</span>
         </div>
         <div className="mt-3">
-          <span className={`inline-block px-4 py-1.5 rounded-full text-sm font-medium border ${getScoreBgColor(report.score)} ${getScoreColor(report.score)}`}>
+          <span
+            className={`inline-block px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium border ${getScoreBgColor(
+              report.score
+            )} ${getScoreColor(report.score)}`}
+          >
             {report.status || 'Unknown'}
           </span>
         </div>
-        <div className="mt-4 text-xs text-neutral-500">
-          Higher scores indicate better uptime, performance, and resilience under load.
+        <div className="mt-4 text-xs text-neutral-500 max-w-md mx-auto">
+          Higher scores indicate better uptime, performance, and resilience under load for the target URL.
         </div>
         {report.raw?.runId && (
           <div className="mt-4 text-[11px] text-neutral-600 font-mono">
@@ -222,8 +230,8 @@ export default function ReportViewer({ report, loading, onBack }) {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/80 hover:bg-neutral-950 transition-colors">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="border border-neutral-800/90 rounded-xl p-4 bg-neutral-950/80 hover:bg-neutral-950 transition-colors">
           <div className="text-2xl font-semibold text-white mb-1">
             {passedTests}
           </div>
@@ -233,7 +241,7 @@ export default function ReportViewer({ report, loading, onBack }) {
           </div>
         </div>
         
-        <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/80 hover:bg-neutral-950 transition-colors">
+        <div className="border border-neutral-800/90 rounded-xl p-4 bg-neutral-950/80 hover:bg-neutral-950 transition-colors">
           <div className="text-2xl font-semibold text-white mb-1">
             {report.issues?.length || 0}
           </div>
@@ -243,7 +251,7 @@ export default function ReportViewer({ report, loading, onBack }) {
           </div>
         </div>
         
-        <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/80 hover:bg-neutral-950 transition-colors">
+        <div className="border border-neutral-800/90 rounded-xl p-4 bg-neutral-950/80 hover:bg-neutral-950 transition-colors">
           <div className="text-2xl font-semibold text-white mb-1">
             {report.raw?.totalDuration ? formatDuration(report.raw.totalDuration) : '0s'}
           </div>
@@ -253,7 +261,7 @@ export default function ReportViewer({ report, loading, onBack }) {
           </div>
         </div>
         
-        <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/80 hover:bg-neutral-950 transition-colors">
+        <div className="border border-neutral-800/90 rounded-xl p-4 bg-neutral-950/80 hover:bg-neutral-950 transition-colors">
           <div className="text-2xl font-semibold text-white mb-1">
             {totalTests}
           </div>
@@ -332,8 +340,8 @@ export default function ReportViewer({ report, loading, onBack }) {
 
       {/* Test Results */}
       {report.raw?.tests && report.raw.tests.length > 0 && (
-        <div className="border border-neutral-900 rounded-xl p-6">
-          <h3 className="text-sm font-medium text-neutral-400 mb-4">Detailed Test Results</h3>
+        <div className="border border-neutral-900 rounded-xl p-6 bg-neutral-950/80">
+          <h3 className="text-sm font-medium text-neutral-300 mb-4">Detailed test results</h3>
           <div className="space-y-2">
             {report.raw.tests.map((test, idx) => (
               <div 

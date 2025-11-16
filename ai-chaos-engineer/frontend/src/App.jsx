@@ -195,7 +195,7 @@ function App() {
           <div className={`w-full space-y-6 sm:space-y-8 ${loading ? 'md:py-8' : 'md:py-4 sm:py-8'}`}>
             {/* Hero Section */}
             <div className="text-center space-y-3 sm:space-y-4 max-w-2xl mx-auto">
-              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-neutral-800 text-neutral-400 text-xs sm:text-sm font-medium animate-fade-in">
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-neutral-800/80 bg-black/60 text-neutral-400 text-xs sm:text-sm font-medium animate-fade-in shadow-[0_0_40px_rgba(59,130,246,0.18)]">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
@@ -240,17 +240,17 @@ function App() {
             {/* Features Grid - Only show when not loading */}
             {!loading && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-4 sm:pt-6">
-                <div className="group p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 hover:border-neutral-700 transition-colors">
+                <div className="group p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 hover:border-neutral-700 transition-colors transition-transform hover:-translate-y-0.5">
                   <div className="text-xs text-neutral-500 mb-1 uppercase tracking-wide">Coverage</div>
                   <div className="text-2xl font-semibold text-white mb-1">8 checks</div>
                   <div className="text-xs text-neutral-500">Latency, load, errors, endpoints</div>
                 </div>
-                <div className="group p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 hover:border-neutral-700 transition-colors">
+                <div className="group p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 hover:border-neutral-700 transition-colors transition-transform hover:-translate-y-0.5">
                   <div className="text-xs text-neutral-500 mb-1 uppercase tracking-wide">Turnaround</div>
                   <div className="text-2xl font-semibold text-white mb-1">Fast</div>
                   <div className="text-xs text-neutral-500">From URL to report</div>
                 </div>
-                <div className="group p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 hover:border-neutral-700 transition-colors">
+                <div className="group p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 hover:border-neutral-700 transition-colors transition-transform hover:-translate-y-0.5">
                   <div className="text-xs text-neutral-500 mb-1 uppercase tracking-wide">Experience</div>
                   <div className="text-2xl font-semibold text-white mb-1">Live</div>
                   <div className="text-xs text-neutral-500">Streaming test progress</div>

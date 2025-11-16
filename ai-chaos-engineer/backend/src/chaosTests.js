@@ -3,70 +3,145 @@ import { sleep } from './utils/timers.js';
 import { startTestSpan, finishTestSpan } from './sentryClient.js';
 
 /**
- * Tests actual response time by making real HTTP requests
+ * Shared HTTP helper with timeout and consistent headers
+ */
+const DEFAULT_USER_AGENT = 'Mozilla/5.0 (compatible; StruxSiteReliability/1.0)';
+
+async function fetchWithTimeout(url, options = {}) {
+  const {
+    timeoutMs = 10000,
+    method = 'GET',
+    headers = {},
+    redirect = 'follow',
+    signal: externalSignal,
+    ...rest
+  } = options;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      method,
+      redirect,
+      headers: {
+        'User-Agent': DEFAULT_USER_AGENT,
+        ...headers
+      },
+      signal: externalSignal || controller.signal,
+      ...rest
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
+/**
+ * Tests actual response time by making multiple real HTTP requests
+ * Uses median latency for robustness against single slow spikes.
  */
 export async function injectLatency(url, notifyProgress = null) {
   console.log(`[Response Time Test] Testing ${url}...`);
-  const startTime = Date.now();
-  
+  const overallStart = Date.now();
+  const samples = [];
+  let okCount = 0;
+  let lastStatus = null;
+
   try {
-    if (notifyProgress) notifyProgress('Response Time', 'running', { 
-      action: 'Initializing connection',
-      metric: 'Preparing to measure server response time'
-    });
-    
-    if (notifyProgress) notifyProgress('Response Time', 'running', { 
-      action: 'Sending HTTP GET request',
-      metric: 'Waiting for server response...'
-    });
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      signal: controller.signal,
-      redirect: 'follow',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SiteReliabilityMonitor/1.0)'
+    if (notifyProgress) {
+      notifyProgress('Response Time', 'running', {
+        action: 'Initializing connection',
+        metric: 'Preparing to measure server response time (3 samples)'
+      });
+    }
+
+    const attempts = 3;
+
+    for (let i = 0; i < attempts; i++) {
+      const startTime = Date.now();
+
+      if (notifyProgress) {
+        notifyProgress('Response Time', 'running', {
+          action: `Sending HTTP GET request (${i + 1}/${attempts})`,
+          metric: 'Waiting for server response...'
+        });
       }
-    });
-    
-    clearTimeout(timeoutId);
-    const responseTime = Date.now() - startTime;
-    
-    if (notifyProgress) notifyProgress('Response Time', 'running', { 
-      action: 'Response received',
-      metric: `${responseTime}ms - HTTP ${response.status}`
-    });
-    
-    const passed = responseTime < 3000 && response.ok;
-    
-    if (notifyProgress) notifyProgress('Response Time', 'running', { 
-      action: passed ? 'Response time is good' : 'Response time is slow',
-      metric: `${responseTime}ms / 3000ms threshold`
-    });
-    
+
+      try {
+        const response = await fetchWithTimeout(url, {
+          method: 'GET',
+          timeoutMs: 10000,
+          redirect: 'follow'
+        });
+        const duration = Date.now() - startTime;
+        lastStatus = response.status;
+        samples.push(duration);
+        if (response.ok) okCount += 1;
+
+        if (notifyProgress) {
+          notifyProgress('Response Time', 'running', {
+            action: 'Response received',
+            metric: `${duration}ms - HTTP ${response.status}`
+          });
+        }
+      } catch (error) {
+        const duration = Date.now() - startTime;
+        samples.push(duration);
+        if (notifyProgress) {
+          notifyProgress('Response Time', 'running', {
+            action: 'Request failed',
+            metric: `${duration}ms - ${error.message}`
+          });
+        }
+      }
+
+      // Small pause between samples to avoid burst bias
+      await sleep(100);
+    }
+
+    const sorted = [...samples].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)] || 0;
+    const p95 = sorted[Math.floor(sorted.length * 0.95) - 1] || sorted[sorted.length - 1] || 0;
+    const avg = samples.reduce((sum, v) => sum + v, 0) / (samples.length || 1);
+
+    const latencyThresholdMs = 3000;
+    const passed = okCount >= 2 && median < latencyThresholdMs;
+
+    if (notifyProgress) {
+      notifyProgress('Response Time', 'running', {
+        action: passed ? 'Response time is good' : 'Response time is slow or unstable',
+        metric: `median ${Math.round(median)}ms, p95 ${Math.round(p95)}ms (threshold ${latencyThresholdMs}ms)`
+      });
+    }
+
     return {
       test: 'Response Time',
       passed,
-      duration: responseTime,
-      message: passed 
-        ? `Server responded in ${responseTime}ms (good)` 
-        : `Response time: ${responseTime}ms ${!response.ok ? `(HTTP ${response.status})` : '(too slow)'}`,
-      severity: passed ? 'low' : 'medium',
+      duration: Date.now() - overallStart,
+      message: passed
+        ? `Server responded consistently: median ${Math.round(median)}ms (p95 ${Math.round(p95)}ms)`
+        : `Unreliable latency: median ${Math.round(median)}ms, p95 ${Math.round(p95)}ms over ${samples.length} samples`,
+      severity: passed ? 'low' : p95 > 5000 ? 'high' : 'medium',
       details: {
-        responseTime,
-        status: response.status,
-        threshold: 3000
+        samples,
+        median,
+        p95,
+        average: avg,
+        okResponses: okCount,
+        attempts,
+        lastStatus,
+        threshold: latencyThresholdMs
       }
     };
   } catch (error) {
     return {
       test: 'Response Time',
       passed: false,
-      duration: Date.now() - startTime,
-      message: `Error: ${error.message}`,
+      duration: Date.now() - overallStart,
+      message: `Error measuring latency: ${error.message}`,
       severity: 'high'
     };
   }
@@ -89,18 +164,16 @@ export async function loadSpike(url, notifyProgress = null) {
     
     if (notifyProgress) notifyProgress('Concurrent Load', 'running', { 
       action: 'Firing concurrent requests',
-      metric: `Sending ${concurrentRequests} simultaneous HEAD requests...`
+      metric: `Sending ${concurrentRequests} simultaneous requests...`
     });
     
     const promises = Array(concurrentRequests).fill(null).map(async () => {
       const reqStart = Date.now();
       try {
-        const response = await fetch(url, { 
-          method: 'HEAD',
-          redirect: 'follow',
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; SiteReliabilityMonitor/1.0)'
-          }
+        const response = await fetchWithTimeout(url, {
+          method: 'GET',
+          timeoutMs: 10000,
+          redirect: 'follow'
         });
         return {
           success: response.ok,
@@ -125,12 +198,15 @@ export async function loadSpike(url, notifyProgress = null) {
     });
     
     const successful = results.filter(r => r.success).length;
+    const durations = results.map(r => r.duration).sort((a, b) => a - b);
     const avgResponseTime = results.reduce((sum, r) => sum + r.duration, 0) / results.length;
-    const passed = successful >= concurrentRequests * 0.9 && avgResponseTime < 5000;
+    const p95 = durations[Math.floor(durations.length * 0.95) - 1] || durations[durations.length - 1] || 0;
+    const successRate = successful / concurrentRequests;
+    const passed = successRate >= 0.9 && p95 < 5000;
     
     if (notifyProgress) notifyProgress('Concurrent Load', 'running', { 
       action: 'Calculating success rate',
-      metric: `${successful}/${concurrentRequests} succeeded (${(successful/concurrentRequests*100).toFixed(0)}%)`
+      metric: `${successful}/${concurrentRequests} succeeded (${(successRate*100).toFixed(0)}%), p95 ${Math.round(p95)}ms`
     });
     
     return {
@@ -138,14 +214,16 @@ export async function loadSpike(url, notifyProgress = null) {
       passed,
       duration,
       message: passed 
-        ? `Handled ${successful}/${concurrentRequests} concurrent requests (avg: ${Math.round(avgResponseTime)}ms)` 
-        : `Poor load handling: ${successful}/${concurrentRequests} succeeded`,
-      severity: passed ? 'low' : 'medium',
+        ? `Handled ${successful}/${concurrentRequests} concurrent requests (p95: ${Math.round(p95)}ms, avg: ${Math.round(avgResponseTime)}ms)` 
+        : `Poor load handling: ${successful}/${concurrentRequests} succeeded (p95: ${Math.round(p95)}ms, avg: ${Math.round(avgResponseTime)}ms)`,
+      severity: passed ? 'low' : (successRate < 0.7 || p95 > 8000) ? 'high' : 'medium',
       details: {
         totalRequests: concurrentRequests,
         successful,
         failed: concurrentRequests - successful,
-        avgResponseTime: Math.round(avgResponseTime)
+        avgResponseTime: Math.round(avgResponseTime),
+        p95: Math.round(p95),
+        successRate: Number(successRate.toFixed(2))
       }
     };
   } catch (error) {
@@ -295,12 +373,10 @@ export async function memoryLeakTest(url, notifyProgress = null) {
       }
       
       const iterStart = Date.now();
-      await fetch(url, { 
+      await fetchWithTimeout(url, { 
         method: 'HEAD',
-        redirect: 'follow',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; SiteReliabilityMonitor/1.0)'
-        }
+        timeoutMs: 8000,
+        redirect: 'follow'
       }).catch(() => null);
       responseTimes.push(Date.now() - iterStart);
     }
@@ -312,11 +388,11 @@ export async function memoryLeakTest(url, notifyProgress = null) {
       metric: `Comparing early vs late response times`
     });
     
-    const firstQuarter = responseTimes.slice(0, 7).reduce((a, b) => a + b, 0) / 7;
-    const lastQuarter = responseTimes.slice(-7).reduce((a, b) => a + b, 0) / 7;
+    const firstQuarter = responseTimes.slice(0, 10).reduce((a, b) => a + b, 0) / 10;
+    const lastQuarter = responseTimes.slice(-10).reduce((a, b) => a + b, 0) / 10;
     const degradation = ((lastQuarter - firstQuarter) / firstQuarter) * 100;
     
-    const passed = degradation < 50;
+    const passed = degradation < 40;
     
     if (notifyProgress) notifyProgress('Performance Consistency', 'running', { 
       action: 'Calculation complete',
@@ -330,7 +406,7 @@ export async function memoryLeakTest(url, notifyProgress = null) {
       message: passed
         ? `Performance stable: ${degradation.toFixed(1)}% response time change`
         : `Performance degraded: ${degradation.toFixed(1)}% slower over time (potential memory leak)`,
-      severity: passed ? 'low' : 'medium',
+      severity: passed ? 'low' : degradation > 80 ? 'high' : 'medium',
       details: {
         iterations,
         avgFirstQuarter: Math.round(firstQuarter),
@@ -371,12 +447,10 @@ export async function cpuSpikeTest(url, notifyProgress = null) {
     const promises = Array(heavyRequests).fill(null).map(async () => {
       const reqStart = Date.now();
       try {
-        const response = await fetch(url, { 
+        const response = await fetchWithTimeout(url, { 
           method: 'GET',
-          redirect: 'follow',
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; SiteReliabilityMonitor/1.0)'
-          }
+          timeoutMs: 12000,
+          redirect: 'follow'
         });
         return {
           success: response.ok,
@@ -401,7 +475,9 @@ export async function cpuSpikeTest(url, notifyProgress = null) {
     });
     
     const successful = results.filter(r => r.success).length;
-    const passed = successful === heavyRequests && duration < 10000;
+    const durations = results.map(r => r.duration).sort((a, b) => a - b);
+    const maxDuration = durations[durations.length - 1] || 0;
+    const passed = successful === heavyRequests && maxDuration < 10000;
     
     if (notifyProgress) notifyProgress('Heavy Load Stress', 'running', { 
       action: 'Evaluating server resilience',
@@ -413,14 +489,15 @@ export async function cpuSpikeTest(url, notifyProgress = null) {
       passed,
       duration,
       message: passed
-        ? `Server handled ${successful}/${heavyRequests} heavy requests in ${duration}ms`
-        : `Server struggled: ${successful}/${heavyRequests} succeeded in ${duration}ms`,
-      severity: passed ? 'low' : 'medium',
+        ? `Server handled ${successful}/${heavyRequests} heavy requests (max ${maxDuration}ms, total ${duration}ms)`
+        : `Server struggled: ${successful}/${heavyRequests} succeeded (max ${maxDuration}ms, total ${duration}ms)`,
+      severity: passed ? 'low' : (successful <= heavyRequests - 2 || maxDuration > 15000) ? 'high' : 'medium',
       details: {
         totalRequests: heavyRequests,
         successful,
         failed: heavyRequests - successful,
-        totalDuration: duration
+        totalDuration: duration,
+        maxRequestDuration: maxDuration
       }
     };
   } catch (error) {
@@ -456,12 +533,10 @@ export async function rateLimitTest(url, notifyProgress = null) {
     const promises = Array(burstSize).fill(null).map(async (_, idx) => {
       const reqStart = Date.now();
       try {
-        const response = await fetch(url, { 
+        const response = await fetchWithTimeout(url, { 
           method: 'HEAD',
-          redirect: 'follow',
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; SiteReliabilityMonitor/1.0)'
-          }
+          timeoutMs: 8000,
+          redirect: 'follow'
         });
         return {
           success: response.ok,
@@ -548,12 +623,10 @@ export async function errorRecoveryTest(url, notifyProgress = null) {
       invalidPaths.map(async (path) => {
         try {
           const testUrl = new URL(path, url).href;
-          const response = await fetch(testUrl, { 
+          const response = await fetchWithTimeout(testUrl, { 
             method: 'HEAD',
-            redirect: 'manual',
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (compatible; SiteReliabilityMonitor/1.0)'
-            }
+            timeoutMs: 8000,
+            redirect: 'manual'
           });
           return {
             path,
@@ -571,12 +644,10 @@ export async function errorRecoveryTest(url, notifyProgress = null) {
       metric: 'Checking if site recovered from error requests...'
     });
     
-    const mainResponse = await fetch(url, { 
+    const mainResponse = await fetchWithTimeout(url, { 
       method: 'HEAD',
-      redirect: 'follow',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SiteReliabilityMonitor/1.0)'
-      }
+      timeoutMs: 8000,
+      redirect: 'follow'
     });
     const mainStillWorks = mainResponse.ok;
     
@@ -644,12 +715,10 @@ export async function cascadingFailureTest(url, notifyProgress = null) {
     const results = await Promise.all(
       endpoints.map(async (endpoint) => {
         try {
-          const response = await fetch(endpoint, { 
+          const response = await fetchWithTimeout(endpoint, { 
             method: 'HEAD',
-            redirect: 'manual',
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (compatible; SiteReliabilityMonitor/1.0)'
-            }
+            timeoutMs: 8000,
+            redirect: 'manual'
           });
           return {
             endpoint,

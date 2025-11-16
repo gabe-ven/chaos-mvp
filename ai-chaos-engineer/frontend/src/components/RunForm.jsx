@@ -192,7 +192,7 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Enter website URL"
-            className="w-full px-4 sm:px-6 py-3 sm:py-3.5 bg-neutral-950/90 border border-neutral-800 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition-colors text-sm sm:text-base"
+            className="w-full px-4 sm:px-6 py-3 sm:py-3.5 bg-neutral-950/90 border border-neutral-800 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-600/70 transition-colors transition-shadow duration-200 shadow-[0_18px_45px_rgba(0,0,0,0.65)] text-sm sm:text-base"
             disabled={loading}
           />
         </div>
@@ -206,9 +206,9 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
         <button
           type="submit"
           disabled={loading || !isUrlValid}
-          className="w-full bg-white hover:bg-neutral-100 text-black font-semibold py-3.5 sm:py-3.5 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+          className="w-full bg-gradient-to-r from-white to-neutral-200 hover:from-neutral-100 hover:to-neutral-50 text-black font-semibold py-3.5 sm:py-3.5 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
         >
-          {loading ? 'Running...' : 'Start test'}
+          {loading ? 'Running…' : 'Start test'}
         </button>
 
         {/* Recent URLs */}
@@ -236,7 +236,7 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
       {loading && (
         <div className="space-y-4">
           {/* Dashboard Header */}
-          <div className="bg-neutral-950/90 border border-neutral-800 rounded-2xl p-5 sm:p-6">
+          <div className="bg-neutral-950/95 border border-neutral-800 rounded-2xl p-5 sm:p-6 shadow-[0_18px_45px_rgba(0,0,0,0.7)]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="relative">
@@ -271,16 +271,19 @@ export default function RunForm({ onReportReceived, loading, setLoading, liveEve
               return (
                 <div
                   key={idx}
-                  className={`relative overflow-hidden rounded-xl border border-neutral-800 transition-colors ${
+                  className={`relative overflow-hidden rounded-xl border border-neutral-800 transition-colors transition-transform duration-200 ${
                     isActive
-                      ? 'bg-neutral-900/80 border-neutral-600'
+                      ? 'bg-neutral-900/80 border-neutral-500 shadow-[0_0_40px_rgba(59,130,246,0.45)] scale-[1.01]'
                       : status === 'passed'
-                      ? 'bg-neutral-900/40 border-green-700/60'
+                      ? 'bg-neutral-900/40 border-green-700/60 hover:-translate-y-0.5'
                       : status === 'failed'
-                      ? 'bg-neutral-900/40 border-red-700/60'
-                      : 'bg-neutral-900/40'
+                      ? 'bg-neutral-900/40 border-red-700/60 hover:-translate-y-0.5'
+                      : 'bg-neutral-900/40 hover:-translate-y-0.5'
                   }`}
                 >
+                  {isActive && (
+                    <div className="pointer-events-none absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-transparent via-blue-500/35 to-transparent animate-shimmer opacity-70" />
+                  )}
                   <div className="relative p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
